@@ -16,7 +16,7 @@ The repository is organized in a flat structure where functionality is divided i
 
 * make_XXX.m are factory functions used to generate matrices and LCP problems
 
-* test_XXX.m are all test scripts and the XXX part of the name indicates which method or properties that are being tested.
+* test_XXX.m are all test scripts and the XXX part of the name indicates which method or properties that are being tested. All test scripts will dump images into a sub folder named "output". If the folder does not exist all "print" commands will fail. If this is the case then one should just create an empty output folder. 
 
 * All remaining matlab files are functions implementing the numerical methods of the library. There should be plenty of inline code comments to help get an overview of the individual implementations.
 
