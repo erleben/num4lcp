@@ -182,10 +182,14 @@ while iter <= max_iter,
     
     %--- Solve Newton system --------------------------------------------
 %     p  = - inv(J) * Fk;        % 2012-01-08 Kenny: Can we do this linear system solve faster? Maybe use some iterative solver?
-    p = -J\Fk;                   % 2012-06-18 Michael: This is faster than 
-                                 % the above. We might consider inserting a 
-                                 % rcond control to see the conditioning
-                                 % and then use pinv instead.
+    % Making sure the conditioning of the matrix is okay.
+    if rcond(J) < 2*eps
+        p = -pinv(J)*Fk;
+    else
+        p = -J\Fk;                   % 2012-06-18 Michael: This is faster than 
+    end                              % the above. We might consider inserting a 
+                                     % rcond control to see the conditioning
+                                     % and then use pinv instead.
     % 2012-01-09 Kenny: Iterative solutions seems to destroy accuracy very
     % fast -- IP really needs a accurate solution for the Newton system.
     % tol = max( 10e-10, eps*norm(Fk) );
