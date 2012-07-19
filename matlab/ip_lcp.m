@@ -3,8 +3,40 @@ function [ x err iter flag convergence msg ] = ip_lcp( A, b, x0, max_iter, tol_r
 % Copyright 2012,       Michael Andersen, DIKU
 %
 % TODO List:
+%   - Add Schur complement
 %   - Add merit/potential reduction method (Solver, currently not used)
 %   - Add a Params struct, containing parameters for subsolvers.
+%
+% @params
+%   A        - LCP matrix.
+%   b        - LCP vector
+%   x0       - Initial guess, can be used to warm start the solver
+%   max_iter - Maximum number of iterations that the Interior Point method
+%              is allowed to run.
+%   tol_rel  - Stop if the relative tolerance is below this.
+%   tol_abs  - Stop if the absolute tolerance is below this.
+%   solver   - Unused currently. Defines which subsolver to use. These
+%              will in the future include: Central trajectory, Schur 
+%              Complement and Potential Reduction.
+%   profile  - true | false. Whether or not to track convergence rate.
+%
+% @returns
+%   x           - The solution x to LCP given by y = Ax + b, x >= 0, y >= 0
+%   err         - Merit value, should be small, tests has shown that around 
+%                 4.116e-15 is obtainable. Absolute convergence means that 
+%                 err < tol_abs. Relative convergence means that the solver
+%                 got stuck near a local minimum.
+%   iter        - Number of iterates performed before the solver stopped.
+%   flag        - Return code that indicates why the solvers stopped 
+%                 reasons can be seen in the msg cell below (human readable
+%                 dictionaryn).
+%   convergence - If profile is on, saves the merit value for each iterate
+%                 in order to make a convergence plot.
+%   msg         - Human readable string of the return flag.
+% 
+%
+% ##### Explaination of how the Interior Point method works #####
+% ## From the original ip_lcp.m by Kenny Erleben
 %
 %  Given  A,b then the LCP is defined by
 %
@@ -29,7 +61,6 @@ function [ x err iter flag convergence msg ] = ip_lcp( A, b, x0, max_iter, tol_r
 %
 %  Now we introduce the Kojima mapping which we use to reformulate the
 %  relaxed LCP formulation above
-%
 %
 %                        |  A x - y + b        |
 %        F(x,y:gamma) =  |  M W e  - gamma e   | = 0
@@ -96,20 +127,19 @@ N = length(b);
 
 %--- Make sure we got good working default values -------------------------
 if nargin < 3
-    % This might not be that good a value. Might not be feasible at all.
     x0 = zeros(N,1);
 end
 if nargin < 4
-    max_iter = floor(N/2);
+    max_iter = N;
 end
 if nargin < 5
-    tol_rel = 0.0001;
+    tol_rel = 0.00001;
 end
 if nargin < 6
     tol_abs = 10*eps; % Order of 10th of numerical precision seems okay
 end
 if nargin<7
-    solver = 'central trajectory';
+    solver = 'central_trajectory';
 end
 if nargin < 8
     profile = true;
@@ -130,7 +160,6 @@ if x0'*y0 <= 0,
     if rcond(J) < 2*eps
         p = pinv(J)*Fk;
     else
-%         p  = - inv(J) * Fk;
         p = -J\Fk;
     end
     dx = p(1:N);
@@ -181,15 +210,12 @@ while iter <= max_iter,
     Fk = [ A*x - y + b;  M*W*e - gamma*e ];
     
     %--- Solve Newton system --------------------------------------------
-%     p  = - inv(J) * Fk;        % 2012-01-08 Kenny: Can we do this linear system solve faster? Maybe use some iterative solver?
     % Making sure the conditioning of the matrix is okay.
     if rcond(J) < 2*eps
         p = -pinv(J)*Fk;
     else
-        p = -J\Fk;                   % 2012-06-18 Michael: This is faster than 
-    end                              % the above. We might consider inserting a 
-                                     % rcond control to see the conditioning
-                                     % and then use pinv instead.
+        p = -J\Fk;
+    end                              
     % 2012-01-09 Kenny: Iterative solutions seems to destroy accuracy very
     % fast -- IP really needs a accurate solution for the Newton system.
     % tol = max( 10e-10, eps*norm(Fk) );
@@ -222,9 +248,10 @@ while iter <= max_iter,
     end
         
     %--- Do the Newton update --------------------------------------------
-    x = x + taux*dx;  % 2012-01-09 Kenny: Split update seems to give faster convergence rate! At least for dense sym PSD LCPs.
+    x = x + taux*dx;  % 2012-01-09 Kenny: Split update seems to give faster
+                      % convergence rate! At least for dense sym PSD LCPs.
     y = y + tauy*dy;
-    
+      
     if min(x(:)) <= 0
         display([ 'ERROR  Min x = ', num2str(min(x(:))) ] );
         return;
