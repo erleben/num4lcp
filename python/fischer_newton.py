@@ -6,8 +6,9 @@ import sys
 from print_vector import print_vector
 
 def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.float64).eps*10, solver='random', profile=True):
-
-    
+    """
+    Copyright 2012, Michael Andersen, DIKU, michael (at) diku (dot) dk
+    """
 
     # Human readable dictionary of exit messages
     msg = {1 : 'preprocessing',  # flag = 1

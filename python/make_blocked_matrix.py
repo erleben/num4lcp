@@ -1,8 +1,10 @@
 import numpy as np
 
-# Copyright 2012, Michael Andersen, DIKU
-
 def make_blocked_matrix(B,K,F):
+    """
+    Copyright 2012, Michael Andersen, DIKU, michael (at) diku (dot) dk
+    """
+
     # A = MAKE_BLOCKED_MATRIX(B,K,F): Make a random blocked matrix.
     #
     # INPUT:
@@ -15,12 +17,10 @@ def make_blocked_matrix(B,K,F):
     #
     #   A -- A blocked symmetric positive definite matrix
     #
-    # TODO LIST:
-    #   Validate input
-    #
     # Port of Kenny Erleben, DIKU 2011 Matlab code into Python code
 
     N = B*K
+    # Better safe than sorry.
     R = np.random.uniform(0,1,(N,N))
     A = 0.5 * (R + R.T)
 
