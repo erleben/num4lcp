@@ -1,5 +1,5 @@
 import numpy as np
-from print_vector import print_vector
+# from print_vector import print_vector
 
 def make_lcp(A,F):
     """
