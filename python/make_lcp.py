@@ -27,7 +27,7 @@ def make_lcp(A,F):
     x = np.random.uniform(0,1,(N,1))
     x[x < F] = 0
 
-    x = np.real_if_close(x)
+    # x = np.real_if_close(x)
 
     ##### Generate a right-hand-side vector that is ##########
     ##### consistent with a random solution         ##########
