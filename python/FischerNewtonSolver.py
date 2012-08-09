@@ -28,29 +28,31 @@ class FischerNewtonSolver:
     Usage:
       fns = FischerNewtonSolver()
 
-        (x, err, iterate, flag, convergence, msg) = fns.solve(A, b, x0, max_iter=None, tol_rel=0.0001, tol_abs=10*np.finfo(np.float64).eps, subsolver=None, profile=False, warmstart=None, gradient=None, searchmethod=None)
+      (x, err, iterate, flag, convergence, msg) = fns.solve(A, b, x0, max_iter=None, tol_rel=0.0001, tol_abs=10*np.finfo(np.float64).eps, subsolver=None, profile=True, warmstart=None, gradient=None, searchmethod=None)
 
       @params
-        A         - The LCP matrix
-        b         - The LCP vector
-        x0        - Initial guess
-        max_iter  - Maximum number of iterations used to solve the LCP,
-                    default to floor(problem_size / 2.0).
-        tol_rel   - Relative tolerence, break if the error changes less 
-                    than this between two iterations, otherwise it can
-                    be configured to using gradient steps instead.
-        tol_abs   - Absolute tolerence, break if the error drops below
-                    this.
-        subsolver - Chooses which subsolver for solving the Newton
-                    subsystem, these can be perturbation, zero, random
-                    or approximation (not implemented).
-        profile   - whether or not to profile while running, log 
-                    convergence and perhaps other properties, number
-                    of gradient steps, information about warm start etc.
-        warmstart - Class defining how to warm start the Fischer Newton
-                    method. Should implement the entire warm start
-                    procedure returning a new (and better) x0.
-        gradient  - 
+        A             - The LCP matrix
+        b             - The LCP vector
+        x0            - Initial guess
+        max_iter      - Maximum number of iterations used to solve the LCP,
+                        default to floor(problem_size / 2.0).
+        tol_rel       - Relative tolerence, break if the error changes less 
+                        than this between two iterations, otherwise it can
+                        be configured to using gradient steps instead.
+        tol_abs       - Absolute tolerence, break if the error drops below
+                        this.
+        subsolver     - Chooses which subsolver for solving the Newton
+                        subsystem, these can be perturbation, zero, random
+                        or approximation (not implemented).
+        profile       - whether or not to profile while running, log 
+                        convergence and perhaps other properties, number
+                        of gradient steps, information about warm start etc.
+        warmstart     - Class defining how to warm start the Fischer Newton
+                        method. Should implement the entire warm start
+                        procedure returning a new (and better) x0.
+        gradient      - 
+        searchmethod  - Defines the searchmethod used, the default Armijo
+                        backtracking line search
 
     """
 
@@ -61,7 +63,7 @@ class FischerNewtonSolver:
     def solve(self):
         pass
 
-    def solve(self, A, b, x0, max_iter=None, tol_rel=0.0001, tol_abs=10*np.finfo(np.float64).eps, subsolver=None, profile=False, warmstart=None, gradient=None):
+    def solve(self, A, b, x0, max_iter=None, tol_rel=0.0001, tol_abs=10*np.finfo(np.float64).eps, subsolver=None, profile=False, warmstart=None, gradient=None, searchmethod=None):
 
         # Human readable dictionary of exit messages
         msg = {1 : 'preprocessing',  # flag = 1
@@ -160,7 +162,7 @@ class FischerNewtonSolver:
 
             # Perform gradient descent step if take_grad_step is defined
             if self.use_gradient_steps and self.take_gradient_step:
-                als.alpha = gradient.grad_alpha
+                self.searchmethod.alpha = gradient.grad_alpha
                 dx = -nabla_phi
                 if record_stat:
                     stat.grad_steps +=1
@@ -203,7 +205,7 @@ class FischerNewtonSolver:
             x[:] = self.searchmethod.findNextx(A, x, b, dx, f_0, grad_f)
             
             # Reset search alpha to original
-            als.alpha = self.alpha
+            self.searchmethod.alpha = self.alpha
 
             self.iterate += 1
 
