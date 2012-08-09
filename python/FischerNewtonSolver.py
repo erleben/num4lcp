@@ -5,6 +5,10 @@ import scipy.sparse.linalg as spsl
 
 from ArmijoLineSearch import ArmijoLineSearch
 
+"""
+Copyright 2012, Michael Andersen, DIKU. michael (at) diku (dot) dk
+"""
+
 # We might want to delay the imports untill we actually need them.
 from pyamg.relaxation import block_gauss_seidel
 
@@ -18,6 +22,38 @@ class InvalidShapeException(NonSquareException):
     pass
 
 class FischerNewtonSolver:
+    """
+    Fischer Newton's method for solving Linear Complementarity problems
+
+    Usage:
+      fns = FischerNewtonSolver()
+
+        (x, err, iterate, flag, convergence, msg) = fns.solve(A, b, x0, max_iter=None, tol_rel=0.0001, tol_abs=10*np.finfo(np.float64).eps, subsolver=None, profile=False, warmstart=None, gradient=None, searchmethod=None)
+
+      @params
+        A         - The LCP matrix
+        b         - The LCP vector
+        x0        - Initial guess
+        max_iter  - Maximum number of iterations used to solve the LCP,
+                    default to floor(problem_size / 2.0).
+        tol_rel   - Relative tolerence, break if the error changes less 
+                    than this between two iterations, otherwise it can
+                    be configured to using gradient steps instead.
+        tol_abs   - Absolute tolerence, break if the error drops below
+                    this.
+        subsolver - Chooses which subsolver for solving the Newton
+                    subsystem, these can be perturbation, zero, random
+                    or approximation (not implemented).
+        profile   - whether or not to profile while running, log 
+                    convergence and perhaps other properties, number
+                    of gradient steps, information about warm start etc.
+        warmstart - Class defining how to warm start the Fischer Newton
+                    method. Should implement the entire warm start
+                    procedure returning a new (and better) x0.
+        gradient  - 
+
+    """
+
 
     def __init__(self):
         pass
@@ -66,6 +102,8 @@ class FischerNewtonSolver:
         else:
             self.use_gradient_steps = False
 
+            
+
         if profile:
             self.stat = StatStructure()
 
@@ -74,7 +112,10 @@ class FischerNewtonSolver:
         self.beta   = 0.001
         self.alpha  = 0.5
 
-        als = ArmijoLineSearch(merit_func=self.fischer)
+        if searchmethod:
+            self.searchmethod = searchmethod
+        else:
+            self.searchmethod = ArmijoLineSearch(merit_func=self.fischer)
 
         x = x0
         err = 1e20
@@ -157,10 +198,9 @@ class FischerNewtonSolver:
             # Gradient of f
             grad_f = self.beta*np.dot(nabla_phi.T,dx)
 
-
             # Search method returns the new x^{(k+1)}, instead of
             # returning tau^{(k)}, which is more flexible?
-            x[:] = als.findStepsize(A, x, b, dx, f_0, grad_f)
+            x[:] = self.searchmethod.findNextx(A, x, b, dx, f_0, grad_f)
             
             # Reset search alpha to original
             als.alpha = self.alpha
@@ -202,8 +242,6 @@ class FischerNewtonSolver:
             # singular/singular.
             S = np.logical_and(np.abs(phi) < self.gamma,
                            np.abs(x) < self.gamma)
-
-
 
             N = np.size(x)
             
@@ -261,7 +299,6 @@ class FischerNewtonSolver:
                 #     dx = np.linalg.solve(J,(-phi))
 
             dx = dx.reshape(dx.size,1)
-
 
             assert dx.shape == (N,1), 'dx is not a column vector, it has shape: ' + \
                 repr(dx.shape)

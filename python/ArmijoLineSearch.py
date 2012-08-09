@@ -1,5 +1,9 @@
 import numpy as np
 
+"""
+Copyright 2012, Michael Andersen, DIKU. michael (at) diku (dot) dk
+"""
+
 class ArmijoLineSearch():
 
     # def __init__():
@@ -11,7 +15,7 @@ class ArmijoLineSearch():
         self.tau   = tau
         self.merit_func = merit_func
 
-    def findStepsize(self, A, x, b, dx, f_0, grad_f):
+    def findNextx(self, A, x, b, dx, f_0, grad_f):
         
         tau_k = self.tau
 
