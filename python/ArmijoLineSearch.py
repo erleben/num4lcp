@@ -6,9 +6,6 @@ Copyright 2012, Michael Andersen, DIKU. michael (at) diku (dot) dk
 
 class ArmijoLineSearch():
 
-    # def __init__():
-    #     pass
-
     def __init__(self, alpha=0.5, gamma=1e-28, tau=1.0, merit_func=None):
         self.alpha = alpha
         self.gamma = gamma

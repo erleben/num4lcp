@@ -56,9 +56,11 @@ class FischerNewtonSolver:
 
     """
 
-
     def __init__(self):
-        pass
+        self.eps     = np.finfo(np.float64).eps
+        self.rho     = np.finfo(np.float64).eps
+        self.beta    = 0.001
+        self.alpha   = 0.5
 
     def solve(self):
         pass
@@ -75,7 +77,6 @@ class FischerNewtonSolver:
                7 : 'nondescent',     # flag = 7
                8 : 'maxlimit',       # flag = 8
                }
-
 
         if not A.shape[0] == A.shape[1]:
             raise NonSquareException("A is not a square matrix it has shape: {}".format(repr(A.shape)))
@@ -104,26 +105,24 @@ class FischerNewtonSolver:
         else:
             self.use_gradient_steps = False
 
-            
-
-        if profile:
-            self.stat = StatStructure()
-
-        self.eps    = np.finfo(np.float64).eps
-        self.rho    = np.finfo(np.float64).eps
-        self.beta   = 0.001
-        self.alpha  = 0.5
 
         if searchmethod:
             self.searchmethod = searchmethod
         else:
             self.searchmethod = ArmijoLineSearch(merit_func=self.fischer)
 
+        if warmstart:
+            self.warm_start = True
+            x0 = warmstart(A,b,x0, max_warm_iter)
+
+        if profile:
+            self.stat = StatStructure(max_iter+1, self.use_gradient_steps, self.warm_start)
+
         x = x0
         err = 1e20
-        self.iterate = 0
-        convergence = np.zeros(self.max_iter+1)
+        self.iterate = 1
 
+        convergence = np.zeros(self.max_iter+1)
 
         while self.iterate <= self.max_iter:
 
@@ -134,7 +133,7 @@ class FischerNewtonSolver:
             err = 0.5*np.dot(phi.T,phi)
 
             if profile:
-                convergence[self.iterate - 1] = err
+                convergence[self.iterate] = err
 
             if self.use_gradient_steps:
                 self.take_gradient_step = False
@@ -165,7 +164,7 @@ class FischerNewtonSolver:
                 self.searchmethod.alpha = gradient.grad_alpha
                 dx = -nabla_phi
                 if record_stat:
-                    stat.grad_steps +=1
+                    stat.gradient_steps +=1
 
             # Tests whether the search direction is below machine
             # precision.
@@ -189,7 +188,7 @@ class FischerNewtonSolver:
                 # Otherwise we should try gradient direction instead.
                 if self.use_grad_steps:
                     dx = nabla_phi
-                    stat.grad_steps += 1
+                    stat.gradient_steps += 1
                     print ">>> Gradient descent step taken. (non descent)"
                 else:
                     flag = 7
