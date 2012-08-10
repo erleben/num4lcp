@@ -3,6 +3,7 @@ import scipy.sparse as sps
 import scipy.linalg as spl
 import scipy.sparse.linalg as spsl
 
+from StatStructure import StatStructure
 from ArmijoLineSearch import ArmijoLineSearch
 
 """
@@ -100,10 +101,11 @@ class FischerNewtonSolver:
             self.subsolver = SubsolverPerturbation()
 
         if gradient:
-            self.use_gradient_steps = True
+            self.use_gradient_steps = gradient
             self.take_gradient_step = False
+            grad_alpha=0.9
         else:
-            self.use_gradient_steps = False
+            self.use_gradient_steps = gradient
 
 
         if searchmethod:
@@ -114,17 +116,17 @@ class FischerNewtonSolver:
         if warmstart:
             self.warm_start = True
             x0 = warmstart(A,b,x0, max_warm_iter)
+        else:
+            self.warm_start = False
 
         if profile:
-            self.stat = StatStructure(max_iter+1, self.use_gradient_steps, self.warm_start)
+            self.stat = StatStructure(self.max_iter+1, self.use_gradient_steps, self.warm_start)
 
         x = x0
         err = 1e20
         self.iterate = 1
 
-        convergence = np.zeros(self.max_iter+1)
-
-        while self.iterate <= self.max_iter:
+        while self.iterate < self.max_iter:
 
             y = np.dot(A,x) + b
 
@@ -133,7 +135,7 @@ class FischerNewtonSolver:
             err = 0.5*np.dot(phi.T,phi)
 
             if profile:
-                convergence[self.iterate] = err
+                self.stat.convergence[self.iterate] = err
 
             if self.use_gradient_steps:
                 self.take_gradient_step = False
@@ -145,11 +147,13 @@ class FischerNewtonSolver:
                 if self.use_gradient_steps:
                     self.take_gradient_step = True
                 else:
-                    flag = 3
+                    if profile:
+                        self.stat.flag = 3
                     break
 
             if err < tol_abs:
-                flag = 4
+                if profile:
+                    self.stat.flag = 4
                 break
 
             # Call the chosen subsolver
@@ -161,10 +165,11 @@ class FischerNewtonSolver:
 
             # Perform gradient descent step if take_grad_step is defined
             if self.use_gradient_steps and self.take_gradient_step:
-                self.searchmethod.alpha = gradient.grad_alpha
+                # self.searchmethod.alpha = gradient.grad_alpha
+                self.searchmethod.alpha = grad_alpha
                 dx = -nabla_phi
-                if record_stat:
-                    stat.gradient_steps +=1
+                if profile:
+                    self.stat.gradient_steps['gradient descent'] +=1
 
             # Tests whether the search direction is below machine
             # precision.
@@ -173,14 +178,17 @@ class FischerNewtonSolver:
                 # a gradient descent step
                 if take_gradient_step:
                     dx = -nabla_phi
-                    grad_steps += 1
+                    if profile:
+                        self.stat.gradient_steps['search direction'] += 1
                 else:
-                    flag = 5
+                    if profile:
+                        self.stat.flag = 5
                     break
 
             # Test whether we are stuck in a local minima
             if np.linalg.norm(nabla_phi) < tol_abs:
-                flag = 6
+                if profile:
+                    self.stat.flag = 6
                 break
 
             # Test whether our direction is a sufficient descent direction
@@ -188,10 +196,11 @@ class FischerNewtonSolver:
                 # Otherwise we should try gradient direction instead.
                 if self.use_grad_steps:
                     dx = nabla_phi
-                    stat.gradient_steps += 1
-                    print ">>> Gradient descent step taken. (non descent)"
+                    if profile:
+                        self.stat.gradient_steps['non descent'] += 1
                 else:
-                    flag = 7
+                    if profile:
+                        self.stat.flag = 7
                     break
 
             # For testing sufficient decrease in function
@@ -210,12 +219,20 @@ class FischerNewtonSolver:
 
         if self.iterate >= self.max_iter:
             self.iterate -= 1
-            flag = 8
+            if profile:
+                self.stat.flag = 8
 
+        if profile:
+            self.stat.msg = msg[self.stat.flag]
+            self.stat.iterate = self.iterate
+        
         # Might want to change this to returning a
         # FischerNewtonSolution containing all the relevant stuff. Or
         # might this be too much of an overhead.
-        return (x, err, self.iterate, flag, convergence[:self.iterate], msg[flag])
+        if profile:
+            return (x, err, self.stat)
+        else:
+            return (x, err)
 
 
     def fischer(self,a,b):
