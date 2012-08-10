@@ -1,5 +1,9 @@
 import numpy as np
 
+"""
+Copyright 2012, Michael Andersen, DIKU. michael (at) diku (dot) dk
+"""
+
 class StatStructure():
     
     def __init__(self, size, gradient=False, warmstart=False):
