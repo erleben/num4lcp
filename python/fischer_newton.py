@@ -54,7 +54,7 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
     gmres_tol = 10*eps
 
     ##### Warm start of FN using Blocked Gauss-Seidel from PyAMG #####
-    warm_start = True
+    warm_start = False
     max_warm_iterate = 5
     max_bgs_iterate = 5
     if warm_start:
@@ -156,7 +156,7 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
 
             # Call GMRES (This is very slow, might consider another
             # approach)
-            dx[idx] = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol restart=restart)[0].reshape(idx[0].size,1)
+            dx[idx] = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
 
             dx = dx.toarray()
             dx = dx.reshape(-1,1)

@@ -57,16 +57,26 @@ class FischerNewtonSolver:
 
     """
 
-    def __init__(self):
-        self.eps     = np.finfo(np.float64).eps
-        self.rho     = np.finfo(np.float64).eps
-        self.beta    = 0.001
-        self.alpha   = 0.5
+    def __init__(self,
+                 eps=np.finfo(np.float64).eps, 
+                 rho=np.finfo(np.float64).eps,
+                 beta=0.001,
+                 alpha=0.5):
 
-    def solve(self):
-        pass
+        self.eps     = eps
+        self.rho     = rho
+        self.beta    = beta
+        self.alpha   = alpha
 
-    def solve(self, A, b, x0, max_iter=None, tol_rel=0.0001, tol_abs=10*np.finfo(np.float64).eps, subsolver=None, profile=False, warmstart=None, gradient=None, searchmethod=None):
+    def solve(self, A, b, x0,
+              max_iter=None,
+              tol_rel=0.0001,
+              tol_abs=10*np.finfo(np.float64).eps,
+              subsolver=None,
+              warmstart=None,
+              gradient=None, 
+              searchmethod=None,
+              profile=False):
 
         # Human readable dictionary of exit messages
         msg = {1 : 'preprocessing',  # flag = 1
