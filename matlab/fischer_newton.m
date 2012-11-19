@@ -56,7 +56,7 @@ rho     = eps;     % Descent direction test parameter used to test if the Newton
 
 %--- Setup values need while iterating ------------------------------------
 
-convergence = zeros(max_iter,1); % Used when profiling to measure the convergence rate
+convergence = []; % Used when profiling to measure the convergence rate
 
 err     = Inf;         % Current error measure
 x       = x0;          % Current iterate
@@ -74,7 +74,7 @@ while (iter <= max_iter )
   err     = 0.5*(phi'*phi);       % Natural merit function
   
   if profile
-    convergence(iter) = err;
+    convergence = [convergence err];
   end
   if (abs(err - old_err) / abs(old_err)) < tol_rel  % Relative stopping criteria
     flag = 3;
@@ -224,7 +224,8 @@ if iter>=max_iter
   flag = 8;
   iter = iter - 1;
 end
-  
+% Just return the message string, not entire cell.
+msg = msg{flag};
 end
 
 function [ phi ] = fischer(y,x)
