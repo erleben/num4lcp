@@ -82,10 +82,10 @@ function [ x err iter flag convergence msg ] = penalized_fischer_burmeister( A, 
             convergence = [convergence err];
         end
         
-        if (abs(err - old_err) / abs(old_err)) < tol_rel  % Relative stopping criteria
-            flag = 3;
-            break;
-        end        
+%         if (abs(err - old_err) / abs(old_err)) < tol_rel  % Relative stopping criteria
+%             flag = 3;
+%             break;
+%         end        
         if err < tol_abs
             flag = 4;
             break;
