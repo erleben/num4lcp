@@ -9,19 +9,18 @@ x0     = zeros(size(x));
 tol_rel  = 0.0;
 tol_abs  = 0.0;
 max_iter = 30;
-
     
 [z1 e1 i1 f1 conv1 m1] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'random', true);
-display( strcat( 'Parameter test: Fischer = ', m1(f1), ' in ', num2str(i1), ' iterations' ));
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''random'' solver.\n', abs(A*z1+b)'*z1, e1, i1, m1);
 
 [z2 e2 i2 f2 conv2 m2] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'perturbation', true);
-display( strcat( 'Parameter test: Fischer = ', m2(f2), ' in ', num2str(i2), ' iterations' ));
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''perturbation'' solver.\n', abs(A*z2+b)'*z2, e2, i2, m2);
 
 [z3 e3 i3 f3 conv3 m3] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'zero', true);
-display( strcat( 'Parameter test: Fischer = ', m3(f3), ' in ', num2str(i3), ' iterations' ));
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''zero'' solver.\n', abs(A*z3+b)'*z3, e3, i3, m3);
 
 [z4 e4 i4 f4 conv4 m4] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'approximation', true);
-display( strcat( 'Parameter test: Fischer = ', m4(f4), ' in ', num2str(i4), ' iterations' ));
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''approximation'' solver.\n', abs(A*z4+b)'*z4, e4, i4, m4);
 
 figure(1)
 clf;
@@ -44,16 +43,16 @@ A      = make_contact_matrix(30);
 x0     = zeros(size(x));
     
 [z1 e1 i1 f1 conv1 m1] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'random', true);
-display( strcat( 'Parameter test: Fischer = ', m1(f1), ' in ', num2str(i1), ' iterations' ));
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''random'' solver.\n', abs(A*z1+b)'*z1, e1, i1, m1);
 
 [z2 e2 i2 f2 conv2 m2] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'perturbation', true);
-display( strcat( 'Parameter test: Fischer = ', m2(f2), ' in ', num2str(i2), ' iterations' ));
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''perturbation'' solver.\n', abs(A*z2+b)'*z2, e2, i2, m2);
 
 [z3 e3 i3 f3 conv3 m3] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'zero', true);
-display( strcat( 'Parameter test: Fischer = ', m3(f3), ' in ', num2str(i3), ' iterations' ));
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''zero'' solver.\n', abs(A*z3+b)'*z3, e3, i3, m3);
 
 [z4 e4 i4 f4 conv4 m4] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'approximation', true);
-display( strcat( 'Parameter test: Fischer = ', m4(f4), ' in ', num2str(i4), ' iterations' ));
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''approximation'' solver.\n', abs(A*z4+b)'*z4, e4, i4, m4);
 
 figure(2)
 clf;
