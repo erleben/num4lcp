@@ -24,7 +24,7 @@ fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s"\n', abs(M*z2+q)'*z2, e2
 num_test = 100;
 
 % for i = 1:num_test
-    A      = make_contact_matrix(5);
+    A      = make_contact_matrix(10);
     [x, b] = make_lcp(A,0.25);
     x0     = zeros(size(x));
 
