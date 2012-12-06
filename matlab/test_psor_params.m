@@ -31,15 +31,15 @@ x0     = zeros(size(x));
 [z8 e8 i8 f8 conv8 m8] = psor(A, b, x0, lambda8, max_iter, tol_rel, tol_abs, true);
 [z9 e9 i9 f9 conv9 m9] = psor(A, b, x0, lambda9, max_iter, tol_rel, tol_abs, true);
 
-display( strcat( 'Parameter test: final PGS state = ', m1(f1), ' in ', num2str(i1), ' iterations' ));
-display( strcat( 'Parameter test: final PGS state = ', m2(f2), ' in ', num2str(i2), ' iterations' ));
-display( strcat( 'Parameter test: final PGS state = ', m3(f3), ' in ', num2str(i3), ' iterations' ));
-display( strcat( 'Parameter test: final PGS state = ', m4(f4), ' in ', num2str(i4), ' iterations' ));
-display( strcat( 'Parameter test: final PGS state = ', m5(f5), ' in ', num2str(i5), ' iterations' ));
-display( strcat( 'Parameter test: final PGS state = ', m6(f6), ' in ', num2str(i6), ' iterations' ));
-display( strcat( 'Parameter test: final PGS state = ', m7(f7), ' in ', num2str(i7), ' iterations' ));
-display( strcat( 'Parameter test: final PGS state = ', m8(f8), ' in ', num2str(i8), ' iterations' ));
-display( strcat( 'Parameter test: final PGS state = ', m9(f9), ' in ', num2str(i9), ' iterations' ));
+display( [ 'Parameter test: final PGS state = ' m1 ' in ' num2str(i1) ' iterations' ]);
+display( [ 'Parameter test: final PGS state = ' m2 ' in ' num2str(i2) ' iterations' ]);
+display( [ 'Parameter test: final PGS state = ' m3 ' in ' num2str(i3) ' iterations' ]);
+display( [ 'Parameter test: final PGS state = ' m4 ' in ' num2str(i4) ' iterations' ]);
+display( [ 'Parameter test: final PGS state = ' m5 ' in ' num2str(i5) ' iterations' ]);
+display( [ 'Parameter test: final PGS state = ' m6 ' in ' num2str(i6) ' iterations' ]);
+display( [ 'Parameter test: final PGS state = ' m7 ' in ' num2str(i7) ' iterations' ]);
+display( [ 'Parameter test: final PGS state = ' m8 ' in ' num2str(i8) ' iterations' ]);
+display( [ 'Parameter test: final PGS state = ' m9 ' in ' num2str(i9) ' iterations' ]);
 
 figure(1)
 clf;

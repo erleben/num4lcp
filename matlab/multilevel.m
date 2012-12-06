@@ -103,6 +103,7 @@ while iter <= max_iter
 end
 if iter>=max_iter
   flag = 8;
-  iter = iter -1;
+  iter = iter - 1;
 end
+msg = msg{flag};
 end
