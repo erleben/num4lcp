@@ -5,12 +5,12 @@ from scipy.sparse.linalg import gmres
 from scipy.sparse.linalg import LinearOperator
 from scipy.sparse.linalg import dsolve
 
-from pyamg.relaxation import block_gauss_seidel
+# from pyamg.relaxation import block_gauss_seidel
 
 import sys
 # from print_vector import print_vector
 
-def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.float64).eps*10, solver='random', profile=True):
+def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.float64).eps*10, solver='perturbation', profile=True):
     """
     Copyright 2012, Michael Andersen, DIKU, michael (at) diku (dot) dk
     """
@@ -55,8 +55,8 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
 
     ##### Warm start of FN using Blocked Gauss-Seidel from PyAMG #####
     warm_start = False
-    max_warm_iterate = 5
-    max_bgs_iterate = 5
+    max_warm_iterate = 10
+    max_bgs_iterate = 10
     if warm_start:
         x = fischer_warm_start(A, x, b, max_warm_iterate, max_bgs_iterate)
 
@@ -283,7 +283,7 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
         nabla_phi = np.dot(phi.T, J)
         # We could use nabla_phi = nabla_phi.reshape(nabla_phi.size,
         # 1) instead this creates a column vector no matter what.
-        nabla_phi = nabla_phi.T
+        nabla_phi = nabla_phi.reshape(nabla_phi.size,1)
         assert nabla_phi.shape == (N,1), 'nabla_phi is not a column vector, it has shape: ' + repr(nabla_phi.shape)
         assert np.all(np.isreal(nabla_phi)), 'nabla_phi is not real'
 
@@ -304,7 +304,7 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
             # If enabled and the relative change in error is low, use
             # a gradient descent step
             if take_grad_step:
-                dx = nabla_phi
+                dx = np.dot(-J.T, phi)
                 grad_steps += 1
                 print ">>> Gradient descent step taken. (non progress direction)"
             else:
@@ -319,7 +319,7 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
         if np.dot(nabla_phi.T,dx) > -rho*(np.dot(dx.T, dx)):
             # Otherwise we should try gradient direction instead.
             if use_grad_steps:
-                dx = nabla_phi
+                dx = np.dot(-J.T, phi)
                 grad_steps += 1
                 print ">>> Gradient descent step taken. (non descent)"
             else:

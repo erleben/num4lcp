@@ -1,7 +1,7 @@
 import numpy as np
 # from print_vector import print_vector
 
-def make_lcp(A,F):
+def make_lcp(A,F=0.25):
     """
     Copyright 2012, Michael Andersen, DIKU, michael (at) diku (dot) dk
     """
