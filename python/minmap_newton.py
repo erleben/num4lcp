@@ -5,12 +5,10 @@ from scipy.sparse.linalg import gmres
 from scipy.sparse.linalg import LinearOperator
 from scipy.sparse.linalg import dsolve
 
-# from pyamg.relaxation import block_gauss_seidel
-
 import sys
 # from print_vector import print_vector
 
-def minmap_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.float64).eps*10, solver='random', profile=True):
+def minmap_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.float64).eps*10, profile=True):
     """
     Copyright 2012, Michael Andersen, DIKU, michael (at) diku (dot) dk
     """
@@ -52,13 +50,6 @@ def minmap_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.floa
     eps    = np.finfo(np.float64).eps
     rho    = np.finfo(np.float64).eps
     gmres_tol = 10*eps
-
-    # ##### Warm start of FN using Blocked Gauss-Seidel from PyAMG #####
-    # warm_start = False
-    # max_warm_iterate = 5
-    # max_bgs_iterate = 5
-    # if warm_start:
-    #     x = fischer_warm_start(A, x, b, max_warm_iterate, max_bgs_iterate)
 
     ##### Values needed file iterating #####
     convergence = np.zeros(max_iter+1)
@@ -118,7 +109,7 @@ def minmap_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.floa
         # precision.
         if np.max(np.abs(dx)) < eps:
             flag = 5
-            print "*** Search direction below machine precision, choosing gradient as search direction."
+            print "*** Search direction below machine precision at iterate " + repr(iterate) + ", choosing gradient as search direction."
             dx = -nabla_H
 
         # Test whether we are stuck in a local minima

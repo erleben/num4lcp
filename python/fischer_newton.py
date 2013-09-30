@@ -55,8 +55,8 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
 
     ##### Warm start of FN using Blocked Gauss-Seidel from PyAMG #####
     warm_start = False
-    max_warm_iterate = 10
-    max_bgs_iterate = 10
+    max_warm_iterate = 5
+    max_bgs_iterate = 5
     if warm_start:
         x = fischer_warm_start(A, x, b, max_warm_iterate, max_bgs_iterate)
 
@@ -70,7 +70,6 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
 
     grad_steps = 0
     grad_steps_max = max_iter
-    # use_grad_steps = False
     use_grad_steps = True
 
     while iterate <= max_iter:
@@ -93,15 +92,8 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
         assert err.shape == (1,1), 'err is not a scalar, it has shape: ' + repr(err.shape)
         assert np.isreal(err), 'err is not real'
 
-        # print "Err: " + repr(np.float64(err))
-        
         if profile:
             convergence[iterate-1] = err
-
-        rel_measure = np.float64(np.abs(err-old_err)/np.abs(old_err))
-        rel_nabs_measure = np.float64((err-old_err)/old_err)
-
-        # print "Relative measure: {0:g>.20} \t Relative measure (non abs): {1:g>.20}".format(rel_measure, rel_nabs_measure)
 
         if grad_steps > grad_steps_max:
             # Should we break or should we just stop using grad steps?
@@ -138,7 +130,6 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
                                         # before Restart for GMRES
                                         # should restart
 
-        # if take_grad_step:
         if 'random' == str.lower(solver): # Works on full system
 
             # Initialize as sparse, otherwise indexing will not work.
@@ -185,22 +176,14 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
             direction[ direction == 0 ] = 1
             px[S] = gamma * direction[S]
             p = np.zeros(px.shape)
-            # p = (px / (np.sqrt(y**2+px**2)))-1
             p = (px / (np.sqrt(np.power(y,2) + np.power(px,2))))-1
             assert p.shape == (N,1), 'p is not a column vector, it has shape: ' + repr(p.shape)
             assert np.all(np.isreal(p)), 'p is not real'
 
-            # Convert np.nan in p to 0.0
-            # p = np.nan_to_num(p)
-
             q = np.zeros(y.shape)
-            # q = (y/(np.sqrt(y**2+px**2)))-1
             q = (y / (np.sqrt(np.power(y,2) + np.power(px,2)))) - 1
             assert q.shape == (N,1), 'q is not a column vector, it has shape: ' + repr(q.shape)
             assert np.all(np.isreal(q)), 'q is not reeal'
-
-            # Convert np.nan in q to 0.0
-            # q = np.nan_to_num(q)
 
             J = np.dot(np.diag(p[:,0]),np.identity(N)) + np.dot(np.diag(q[:,0]),A)
             assert J.shape == (N,N), 'J is not a square matrix, it has shape: ' + repr(J.shape)
@@ -213,7 +196,6 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
 
             # Check conditioning of J, if bad use pinv to solve the system.
             if rcond < 2*eps:
-            #     dx = np.dot(np.linalg.pinv(J), (-phi))
                 if np.any(np.isnan(J)):
                     print "J contains nan"
                 if np.any(np.isnan(phi)):
@@ -225,24 +207,19 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
                     dx = np.dot(spl.pinv2(J), (-phi))
 
             else:
-            #     dx = np.linalg.solve(J,(-phi))
                 J = sps.csc_matrix(J)
                 dx = dsolve.spsolve(J, (-phi), use_umfpack=True)
                 dx = dx.reshape(dx.size,1)
                 J = J.toarray()
 
-            # dx = dx.todense()
             assert dx.shape == (N,1), 'dx is not a column vector, it has shape: ' + repr(dx.shape)
             assert np.all(np.isreal(dx)), 'dx is not real'
 
         elif 'zero' == str.lower(solver):
-
             J = sps.lil_matrix((N,N))
             dx = sps.lil_matrix((N,1))
-
             q = (y[I]/((y[I]**2+x[I]**2)**(0.5)))-1
             p = (x[I]/((y[I]**2+x[I]**2)**(0.5)))-1
-
             J[idx[0],idx[0]] = np.diag(p)*np.identity(A[idx].shape[0]) + np.dot(np.diag(q),A[idx[0],:][:,idx[0]])
             J = J.toarray()
 
@@ -283,19 +260,15 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
         nabla_phi = np.dot(phi.T, J)
         # We could use nabla_phi = nabla_phi.reshape(nabla_phi.size,
         # 1) instead this creates a column vector no matter what.
-        nabla_phi = nabla_phi.reshape(nabla_phi.size,1)
+        nabla_phi = nabla_phi.T
         assert nabla_phi.shape == (N,1), 'nabla_phi is not a column vector, it has shape: ' + repr(nabla_phi.shape)
         assert np.all(np.isreal(nabla_phi)), 'nabla_phi is not real'
 
         # Perform gradient descent step if take_grad_step is defined
         if take_grad_step:
             alpha = 0.9
-            dx = np.dot(-J.T, phi)
+            dx = -nabla_phi
             grad_steps += 1
-            # print ">>> Gradient descent step taken. (default)"
-            # # We might get into a non descent situation, so wait
-            # # till next iterate to set it to false again.
-            # take_grad_step = False
 
         # Tests whether the search direction is below machine
         # precision.
@@ -304,9 +277,9 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
             # If enabled and the relative change in error is low, use
             # a gradient descent step
             if take_grad_step:
-                dx = np.dot(-J.T, phi)
+                dx = -nabla_phi
                 grad_steps += 1
-                print ">>> Gradient descent step taken. (non progress direction)"
+                print "*** Search direction below machine precision at iterate " + repr(iterate) + ", choosing gradient as search direction."
             else:
                 break
 
@@ -319,9 +292,9 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
         if np.dot(nabla_phi.T,dx) > -rho*(np.dot(dx.T, dx)):
             # Otherwise we should try gradient direction instead.
             if use_grad_steps:
-                dx = np.dot(-J.T, phi)
+                dx = -nabla_phi
                 grad_steps += 1
-                print ">>> Gradient descent step taken. (non descent)"
+                print "*** Non descend direction at iterate " + repr(iterate) + ", choosing gradient as search direction."
             else:
                 flag = 7
                 break
@@ -337,7 +310,6 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
     
         # Perform line search
         while True:
-
             x_k = np.maximum(0, x + dx*tau)
             assert x_k.shape == (N,1), 'x_k is not a column vector, it has shape: ' + repr(x_k.shape)
             assert np.all(np.isreal(x_k)), 'x_k is not real'
@@ -345,15 +317,13 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
             y_k = np.dot(A,x_k)+b
             assert y_k.shape == (N,1), 'y_k is not a column vector, it has shape: ' + repr(y_k.shape)
             assert np.all(np.isreal(y_k)), 'y_k is not real'
-
             phi_k = fischer(y_k,x_k)
             assert phi_k.shape == (N,1), 'phi_k is not a column vector, it has shape: ' + repr(phi_k.shape)
             assert np.all(np.isreal(phi_k)), 'phi_k is not real'
 
             f_k = 0.5*(np.dot(phi_k.T,phi_k))
-
             # Test Armijo condition for sufficient decrease
-            if np.all(f_k <= f_0 + tau*grad_f):
+            if f_k <= f_0 + tau*grad_f:
                 break
             
             # Test whether the stepsize has become too small
@@ -378,11 +348,7 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
     return (x, err, iterate, flag, convergence[:iterate], msg[flag])
 
 def fischer(y,x):
-    # Fischer function
-    # return np.sqrt(y**2+x**2) - y - x
     return np.sqrt(np.power(y,2) + np.power(x,2)) - y - x
-# def fischerLinearOperator(A,x,dx,phi,h,idx):
-#     fischer(np.dot(A[idx[0],:][:,idx[0]],(x[idx]+dx[idx]*h)),x[idx]+dx*h)-phi[idx]
 
 
 def fischer_warm_start(A, x, b, max_warm_iterate=10, max_bgs_iterate=10, bgs_blocksize=1):
