@@ -1,7 +1,7 @@
 function [x, err, iter, flag, convergence, msg, t_setup] = multilevel(A, b, x0, k, max_iter, tol_rel, tol_abs, profile)
 % Copyright 2011, Kenny Erleben, DIKU
 
-addpath('aux'); % Make sure that all subroutines can be found.
+addpath('extra'); % Make sure that all subroutines can be found.
 
 % Just a list of human readable text strings to convert the flag return
 % code into something readable by writing msg(flag) onto the screen.
