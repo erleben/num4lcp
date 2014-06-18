@@ -189,8 +189,8 @@ while (iter <= max_iter )
             Db(S1) = lambda*((A(S1,S1)*z(S1))./denomS1-1);
             
             denomS2 = sqrt(x(S2).^2+y(S2).^2);
-            Da(S2) = lambda*(x(S2)./denomS2-1)+(1-lambda)*y(S2);
-            Db(S2) = lambda*(y(S2)./denomS2-1)+(1-lambda)*x(S2);
+            Da(S2) = lambda*(x(S2)./denomS2-1)+(1-lambda)*y(S2);  % Kenny code review: Penalty term should be minus?
+            Db(S2) = lambda*(y(S2)./denomS2-1)+(1-lambda)*x(S2);  % Kenny code review: Penalty term should be minus?
             
             denomNS = sqrt(x(NS).^2+y(NS).^2);
             Da(NS) = lambda*(x(NS)./denomNS-1);
@@ -199,7 +199,7 @@ while (iter <= max_iter )
             % J = Vk
             J = diag(Da) + diag(Db)*A;
             
-            dx = J \ (-phi);
+            dx = J \ (-phi);   % Kenny code review: Expensive direct solver?
             
         otherwise
             disp('Unknown solver method for Newton subsystem')
@@ -289,7 +289,7 @@ function phi_l = phi_lambda(a,b,lambda)
 %       phi_l -> A column vector with the result of the Fischer-Burmeister
 %                NCP function, with size = (n,1)
 
-phi_l = lambda*fischer(a,b)+(1-lambda)*(max(0,a).*max(0,b));
+phi_l = lambda*fischer(a,b) - (1-lambda)*(max(0,a).*max(0,b));
 
 end
 
