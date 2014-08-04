@@ -22,11 +22,11 @@ fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''zero'' solver.\n
 [z4 e4 i4 f4 conv4 m4] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'approximation', true);
 fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''approximation'' solver.\n', abs(A*z4+b)'*z4, e4, i4, m4);
 
-[z5 e5 i5 f5 conv5 m5] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'penalized', true, 0.95);
-fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''perturbation lambda = 0.95'' solver.\n', abs(A*z5+b)'*z5, e5, i5, m5);
+[z5 e5 i5 f5 conv5 m5] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'penalized', true, 0.90);
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''penalized lambda = 0.90'' solver.\n', abs(A*z5+b)'*z5, e5, i5, m5);
 
 [z6 e6 i6 f6 conv6 m6] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'penalized', true, 1.00);
-fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''perturbation lambda = 1.0'' solver.\n', abs(A*z6+b)'*z6, e6, i6, m6);
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''penalized lambda = 1.00'' solver.\n', abs(A*z6+b)'*z6, e6, i6, m6);
 
 figure(1)
 clf;
@@ -42,11 +42,11 @@ h6 = semilogy(conv6, '-p','LineWidth',2,'Color',[0.7 0.7, 0.1]);
 title('Comparison of Newton system solver: fluid LCP','FontSize',18);
 xlabel('Iterations','FontSize',18);
 ylabel('Merit value','FontSize',18);
-legend([h1, h2, h3, h4 h5 h6], 'Random','Perturbation','Zero', 'Approximation', 'Penalized \lambda = 0.95', 'Penalized \lambda = 1.0');
+legend([h1, h2, h3, h4 h5 h6], 'Random','Perturbation','Zero', 'Approximation', 'Penalized \lambda = 0.90', 'Penalized \lambda = 1.00');
 hold off;
 print('-f1','-depsc2','output/comparison_newton_system_solver_fluid');
 
-A      = make_contact_matrix(30);
+A      = make_contact_matrix(50);
 [x, b] = make_lcp(A,0.25);
 x0     = zeros(size(x));
     
@@ -62,11 +62,11 @@ fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''zero'' solver.\n
 [z4 e4 i4 f4 conv4 m4] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'approximation', true);
 fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''approximation'' solver.\n', abs(A*z4+b)'*z4, e4, i4, m4);
 
-[z5 e5 i5 f5 conv5 m5] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'penalized', true, 0.95);
-fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''perturbation lambda = 0.95'' solver.\n', abs(A*z5+b)'*z5, e5, i5, m5);
+[z5 e5 i5 f5 conv5 m5] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'penalized', true, 0.90);
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''penalized lambda = 0.90'' solver.\n', abs(A*z5+b)'*z5, e5, i5, m5);
 
 [z6 e6 i6 f6 conv6 m6] = fischer_newton(A, b, x0, max_iter, tol_rel, tol_abs, 'penalized', true, 1.00);
-fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''perturbation lambda = 1.0'' solver.\n', abs(A*z6+b)'*z6, e6, i6, m6);
+fprintf('Accuracy = %2.5e\tErr = %2.5e iter: %d msg: %s using ''penalized lambda = 1.00'' solver.\n', abs(A*z6+b)'*z6, e6, i6, m6);
 
 figure(2)
 clf;
@@ -79,9 +79,10 @@ h3 = semilogy(conv3, '-.s','LineWidth',2,'Color',[0.1 0.1, 0.7]);
 h4 = semilogy(conv4, '--d','LineWidth',2,'Color',[0.7 0.1, 0.7]);
 h5 = semilogy(conv5, ':+','LineWidth',2,'Color',[0.1 0.7, 0.7]);
 h6 = semilogy(conv6, '-p','LineWidth',2,'Color',[0.7 0.7, 0.1]);
+
 title('Comparison of Newton system solver: contact LCP','FontSize',18);
 xlabel('Iterations','FontSize',18);
 ylabel('Merit value','FontSize',18);
-legend([h1, h2, h3, h4 h5 h6], 'Random','Perturbation','Zero', 'Approximation', 'Penalized \lambda = 0.95', 'Penalized \lambda = 1.0');
+legend([h1 h2 h3 h4 h5 h6], 'Random','Perturbation','Zero', 'Approximation', 'Penalized \lambda = 0.90', 'Penalized \lambda = 1.00' );
 hold off;
 print('-f2','-depsc2','output/comparison_newton_system_solver_contact');
