@@ -179,18 +179,16 @@ while (iter <= max_iter )
             NS = ~(S1 | S2);
             Da = zeros(N,1);
             Db = zeros(N,1);
-            %%% Does not really seem to matter whether we use rand or ones!
+
             z(S1) = ones(length(find(S1)),1);
-            % z(S1) = 0.5*ones(length(find(S1)),1);
-            % z(S1) = rand(length(find(S1)),1);
             
             denomS1 = sqrt(z(S1).^2+(A(S1,S1)*z(S1)).^2);
             Da(S1) = lambda*(z(S1)./denomS1-1);
             Db(S1) = lambda*((A(S1,S1)*z(S1))./denomS1-1);
             
             denomS2 = sqrt(x(S2).^2+y(S2).^2);
-            Da(S2) = lambda*(x(S2)./denomS2-1)+(1-lambda)*y(S2);  % Kenny code review: Penalty term should be minus?
-            Db(S2) = lambda*(y(S2)./denomS2-1)+(1-lambda)*x(S2);  % Kenny code review: Penalty term should be minus?
+            Da(S2) = lambda*(x(S2)./denomS2-1)-(1-lambda)*y(S2);
+            Db(S2) = lambda*(y(S2)./denomS2-1)-(1-lambda)*x(S2);
             
             denomNS = sqrt(x(NS).^2+y(NS).^2);
             Da(NS) = lambda*(x(NS)./denomNS-1);
@@ -198,9 +196,7 @@ while (iter <= max_iter )
             
             % J = Vk
             J = diag(Da) + diag(Db)*A;
-            
-            dx = J \ (-phi);   % Kenny code review: Expensive direct solver?
-            
+            [dx ~]  = gmres( J, (-phi), restart);
         otherwise
             disp('Unknown solver method for Newton subsystem')
     end
