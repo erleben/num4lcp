@@ -142,15 +142,15 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
             q[I] = (y[I]/((y[I]**2+x[I]**2)**(0.5)))-1
             p[I] = (x[I]/((y[I]**2+x[I]**2)**(0.5)))-1
 
-            J[idx[0],:][:,idx[0]] = np.diag(p[I])*np.identity(A[idx].shape[0]) + np.dot(np.diag(q[I]),A[idx[0],:][:,idx[0]])
-            
+            J[np.ix_(idx[0],idx[0])] = np.diag(p[I])*np.identity(A[idx[0],:][:,idx[0]].shape[0]) + np.dot(np.diag(q[I]),A[idx[0],:][:,idx[0]])
+
             J = J.toarray()
             # Call GMRES (This is very slow, might consider another
             # approach)
-            dx[idx].T = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
+            dx[idx[0]] = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
 
             dx = dx.toarray()
-            dx = dx.reshape(-1,1)
+            # dx = dx.reshape(-1,1)
 
             assert dx.shape == (N,1), 'dx is not a column vector, it has shape: ' + repr(dx.shape)
             assert np.all(np.isreal(dx)), 'dx is not real'
@@ -220,12 +220,12 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
             dx = sps.lil_matrix((N,1))
             q = (y[I]/((y[I]**2+x[I]**2)**(0.5)))-1
             p = (x[I]/((y[I]**2+x[I]**2)**(0.5)))-1
-            J[idx[0],:][:,idx[0]] = np.diag(p)*np.identity(A[idx].shape[0]) + np.dot(np.diag(q),A[idx[0],:][:,idx[0]])
+            J[np.ix_(idx[0],idx[0])] = np.diag(p)*np.identity(A[idx].shape[0]) + np.dot(np.diag(q),A[idx[0],:][:,idx[0]])
             J = J.toarray()
 
             # Call GMRES (This is very slow, might consider another
             # approach)
-            dx[idx].T = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
+            dx[idx[0]] = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
 
             dx = dx.toarray()
             dx = dx.reshape(-1,1)
