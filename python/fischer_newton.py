@@ -142,12 +142,12 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
             q[I] = (y[I]/((y[I]**2+x[I]**2)**(0.5)))-1
             p[I] = (x[I]/((y[I]**2+x[I]**2)**(0.5)))-1
 
-            J[idx[0],idx[0]] = np.diag(p[I])*np.identity(A[idx].shape[0]) + np.dot(np.diag(q[I]),A[idx[0],:][:,idx[0]])
+            J[idx[0],:][:,idx[0]] = np.diag(p[I])*np.identity(A[idx].shape[0]) + np.dot(np.diag(q[I]),A[idx[0],:][:,idx[0]])
+            
             J = J.toarray()
-
             # Call GMRES (This is very slow, might consider another
             # approach)
-            dx[idx] = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
+            dx[idx].T = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
 
             dx = dx.toarray()
             dx = dx.reshape(-1,1)
@@ -220,12 +220,12 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
             dx = sps.lil_matrix((N,1))
             q = (y[I]/((y[I]**2+x[I]**2)**(0.5)))-1
             p = (x[I]/((y[I]**2+x[I]**2)**(0.5)))-1
-            J[idx[0],idx[0]] = np.diag(p)*np.identity(A[idx].shape[0]) + np.dot(np.diag(q),A[idx[0],:][:,idx[0]])
+            J[idx[0],:][:,idx[0]] = np.diag(p)*np.identity(A[idx].shape[0]) + np.dot(np.diag(q),A[idx[0],:][:,idx[0]])
             J = J.toarray()
 
             # Call GMRES (This is very slow, might consider another
             # approach)
-            dx[idx] = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
+            dx[idx].T = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
 
             dx = dx.toarray()
             dx = dx.reshape(-1,1)
@@ -233,8 +233,7 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
             assert dx.shape == (N,1), 'dx is not a column vector, it has shape: ' + repr(dx.shape)
 
         elif 'approximation' == str.lower(solver):
-
-            ### THIS IS NOT WORKING YET ###
+            ### TODO: IMPLEMENT THIS ###
             
             J  = sps.lil_matrix((N,N))
             dx = sps.lil_matrix((N,1))
