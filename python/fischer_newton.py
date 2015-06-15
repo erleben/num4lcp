@@ -147,7 +147,7 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
             J = J.toarray()
             # Call GMRES (This is very slow, might consider another
             # approach)
-            dx[idx[0]] = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
+            dx[idx[0]] = gmres(J[idx[0],:][:,idx[0]], (-phi[idx[0]]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
 
             dx = dx.toarray()
             # dx = dx.reshape(-1,1)
@@ -225,32 +225,39 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
 
             # Call GMRES (This is very slow, might consider another
             # approach)
-            dx[idx[0]] = gmres(J[idx[0],:][:,idx[0]], (-phi[idx]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
+            dx[idx[0]] = gmres(J[idx[0],:][:,idx[0]], (-phi[idx[0]]), tol=gmres_tol, restart=restart)[0].reshape(idx[0].size,1)
 
             dx = dx.toarray()
             dx = dx.reshape(-1,1)
 
             assert dx.shape == (N,1), 'dx is not a column vector, it has shape: ' + repr(dx.shape)
 
-        elif 'approximation' == str.lower(solver):
-            ### TODO: IMPLEMENT THIS ###
+        # elif 'approximation' == str.lower(solver):
+        #     ### TODO: IMPLEMENT THIS ###
             
-            J  = sps.lil_matrix((N,N))
-            dx = sps.lil_matrix((N,1))
-            q  = np.zeros(x.shape)
-            p  = np.zeros(x.shape)
+        #     J  = sps.lil_matrix((N,N))
+        #     dx = sps.lil_matrix((N,1))
+        #     q  = np.zeros(x.shape)
+        #     p  = np.zeros(x.shape)
             
-            q[I] = y[I]/((y[I]**2+x[I]**2)**(0.5))-1
-            p[I] = x[I]/((y[I]**2+x[I]**2)**(0.5))-1
+        #     q[I] = y[I]/((y[I]**2+x[I]**2)**(0.5))-1
+        #     p[I] = x[I]/((y[I]**2+x[I]**2)**(0.5))-1
 
-            J[idx[0],idx[0]] = np.diag(p[I])*np.identity(A[idx].shape[0]) + np.dot(np.diag(q[I]),A[idx[0],:][:,idx[0]])
+        #     J[np.ix_(idx[0],idx[0])] = np.diag(p[I])*np.identity(A[idx].shape[0]) + np.dot(np.diag(q[I]),A[idx[0],:][:,idx[0]])
 
-            # Call GMRES, how do we handle a function handle for gmres?
-            fun = lambda dx: (fischer(np.dot(A[idx[0],:][:,idx[0]],(x[I]+dx[I]*h)) + b[I],x[I] + dx[I]*h) - phi[I]) / h
+        #     # Call GMRES, how do we handle a function handle for gmres?
+        #     fun = lambda dx: (fischer(np.dot(A[idx[0],:][:,idx[0]],(x[I]+dx[I]*h)) + b[I],x[I] + dx[I]*h) - phi[I]) / h
 
-            LO = LinearOperator((N,1), matvec = fun)
+        #     print np.size(idx[0])
+            
+        #     print np.shape(A[idx[0],:][:,idx[0]])
+        #     print A[idx[0],:][:,idx[0]].shape[0]
+        #     print np.shape(np.ones((A[idx[0],:][:,idx[0]].shape[0],1)))
+        #     print fun(np.ones((A[idx[0],:][:,idx[0]].shape[0],1)))
+            
+        #     LO = LinearOperator(np.shape(A[idx[0],:][:,idx[0]]), matvec = fun, dtype=A.dtype)
 
-            dx[idx] = gmres(LO, -phi[I], tol=gmres_tol, restart=restart)
+        #     dx[idx] = gmres(LO, -phi[idx[0]], tol=gmres_tol, restart=restart)
             # dx[idx] = gmres(fun, -phi[I], tol=1e-20, restart=restart)
 
         else:
