@@ -42,3 +42,7 @@ x0 = np.zeros(np.shape(x))
 x1, err1, iter1, flag1, conv1, msg1 = ip_lcp(A, b, x0, max_iter, tol_rel, tol_abs, 'central_trajectory', True)
 
 print "> central trajectory: Accuracy = %2.5e Err = %2.5e iter: %d msg: %s" % (np.abs(np.dot(np.transpose((np.dot(A,x1)+b)),x1)), err1, iter1, msg1)
+
+# x2, err2, iter2, flag2, conv2, msg2 = ip_lcp(A, b, x0, max_iter, tol_rel, tol_abs, 'potential_reduction', True)
+
+# print "> potential reduction: Accuracy = %2.5e Err = %2.5e iter: %d msg: %s" % (np.abs(np.dot(np.transpose((np.dot(A,x2)+b)),x2)), err2, iter2, msg2)

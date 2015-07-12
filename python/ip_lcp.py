@@ -122,32 +122,41 @@ def ip_lcp(A, b, x0, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.float64).e
         
         ##### Setup the Newton system ###############
 
-        # if 'central_trajectory' == str.lower(solver):
-        W = np.diag(y[:,0])
-        M = np.diag(x[:,0])
+        if 'central_trajectory' == str.lower(solver):
+            W = np.diag(y[:,0])
+            M = np.diag(x[:,0])
 
-        Jtmp1 = np.hstack((A,-I))
-        Jtmp2 = np.hstack((W, M))
-        J = np.vstack((Jtmp1,Jtmp2))
-        Fk = np.vstack((np.dot(A,x) - y + b,
-                        np.dot(np.dot(M,W),e)-gamma*e))
-        
-        ##### Solve the Newton system ###############
+            Jtmp1 = np.hstack((A,-I))
+            Jtmp2 = np.hstack((W, M))
+            J = np.vstack((Jtmp1,Jtmp2))
+            Fk = np.vstack((np.dot(A,x) - y + b,
+                            np.dot(np.dot(M,W),e)-gamma*e))
+            
+            ##### Solve the Newton system ###############
 
-        p = -np.linalg.solve(J,Fk)
-        # linalg.inv is very slow.
-        # p = np.dot(-np.linalg.inv(J), Fk)
+            p = -np.linalg.solve(J,Fk)
+            # linalg.inv is very slow.
+            # p = np.dot(-np.linalg.inv(J), Fk)
 
-        # elif 'schur_complement':
-
+        elif 'schur_complement' == str.lower(solver):
+            raise NotImplementedError('Schur complement method has not been implemented yet.')
+            
            # Needs to be implmented
 
-        # elif 'potential_reduction':
+        elif 'potential_reduction' == str.lower(solver):
+            raise NotImplementedError('Potential reduction method has not been implemented yet.')
 
+            
+            Jtmp1 = np.hstack((np.diag(y[:,0],np.diag(x[:,0]))))
+            Jtmp2 = np.hstack((-A,I))
+            J     = np.vstack((Jtmp1,Jtmp2))
+            Fk    = np.vstack((beta*np.dot(x,y)/n*e-np.diag(x[:,0])*y,np.zeros(n,1)))
+
+            p = np.linalg.solve(J,Fk)
            # Needs to be implmented
 
-        # else:
-        #     print ">>> ERROR: Unknown subsolver: {}".format(solver)
+        else:
+            print ">>> ERROR: Unknown subsolver: {}".format(solver)
 
         dx = p[:N]
         dy = p[N:]
