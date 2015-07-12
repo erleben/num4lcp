@@ -5,12 +5,14 @@ from scipy.sparse.linalg import gmres
 from scipy.sparse.linalg import LinearOperator
 from scipy.sparse.linalg import dsolve
 
+from line_search_monitor import LineSearchMonitor
+
 # from pyamg.relaxation import block_gauss_seidel
 
 import sys
 # from print_vector import print_vector
 
-def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.float64).eps*10, solver='perturbation', profile=True):
+def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.float64).eps*10, solver='perturbation', profile=True, searchstrategymonitor=LineSearchMonitor()):
     """
     Copyright 2012, Michael Andersen, DIKU, michael (at) diku (dot) dk
     """
@@ -45,8 +47,8 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
 
     ##### Magic constants #####
     h      = 1e-7
-    alpha  = 0.5
-    beta   = 0.001
+    # alpha  = 0.5
+    # beta   = 0.001
     gamma  = 1e-28
 
     eps    = np.finfo(np.float64).eps
@@ -74,7 +76,7 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
 
     while iterate <= max_iter:
 
-        alpha  = 0.5
+        # alpha  = 0.5
 
         take_grad_step = False
 
@@ -88,7 +90,8 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
         assert np.all(np.isreal(phi)), 'phi is not real'
         old_err = err
         # Calculate merit value, error
-        err = 0.5*np.dot(phi.T,phi)
+        # err = 0.5*np.dot(phi.T,phi)
+        err = compute_objective(phi)
         assert err.shape == (1,1), 'err is not a scalar, it has shape: ' + repr(err.shape)
         assert np.isreal(err), 'err is not real'
 
@@ -232,32 +235,32 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
 
             assert dx.shape == (N,1), 'dx is not a column vector, it has shape: ' + repr(dx.shape)
 
-        # elif 'approximation' == str.lower(solver):
-        #     ### TODO: IMPLEMENT THIS ###
+        elif 'approximation' == str.lower(solver):
+            ### TODO: IMPLEMENT THIS ###
             
-        #     J  = sps.lil_matrix((N,N))
-        #     dx = sps.lil_matrix((N,1))
-        #     q  = np.zeros(x.shape)
-        #     p  = np.zeros(x.shape)
+            J  = sps.lil_matrix((N,N))
+            dx = sps.lil_matrix((N,1))
+            q  = np.zeros(x.shape)
+            p  = np.zeros(x.shape)
             
-        #     q[I] = y[I]/((y[I]**2+x[I]**2)**(0.5))-1
-        #     p[I] = x[I]/((y[I]**2+x[I]**2)**(0.5))-1
+            q[I] = y[I]/((y[I]**2+x[I]**2)**(0.5))-1
+            p[I] = x[I]/((y[I]**2+x[I]**2)**(0.5))-1
 
-        #     J[np.ix_(idx[0],idx[0])] = np.diag(p[I])*np.identity(A[idx].shape[0]) + np.dot(np.diag(q[I]),A[idx[0],:][:,idx[0]])
+            J[np.ix_(idx[0],idx[0])] = np.diag(p[I])*np.identity(A[idx].shape[0]) + np.dot(np.diag(q[I]),A[idx[0],:][:,idx[0]])
 
-        #     # Call GMRES, how do we handle a function handle for gmres?
-        #     fun = lambda dx: (fischer(np.dot(A[idx[0],:][:,idx[0]],(x[I]+dx[I]*h)) + b[I],x[I] + dx[I]*h) - phi[I]) / h
+            # Call GMRES, how do we handle a function handle for gmres?
+            fun = lambda dx: (fischer(np.dot(A[idx[0],:][:,idx[0]],(x[I]+dx[I]*h)) + b[I],x[I] + dx[I]*h) - phi[I]) / h
 
-        #     print np.size(idx[0])
+            print np.size(idx[0])
             
-        #     print np.shape(A[idx[0],:][:,idx[0]])
-        #     print A[idx[0],:][:,idx[0]].shape[0]
-        #     print np.shape(np.ones((A[idx[0],:][:,idx[0]].shape[0],1)))
-        #     print fun(np.ones((A[idx[0],:][:,idx[0]].shape[0],1)))
+            print np.shape(A[idx[0],:][:,idx[0]])
+            print A[idx[0],:][:,idx[0]].shape[0]
+            print np.shape(np.ones((A[idx[0],:][:,idx[0]].shape[0],1)))
+            print fun(np.ones((A[idx[0],:][:,idx[0]].shape[0],1)))
             
-        #     LO = LinearOperator(np.shape(A[idx[0],:][:,idx[0]]), matvec = fun, dtype=A.dtype)
+            LO = LinearOperator(np.shape(A[idx[0],:][:,idx[0]]), matvec = fun, dtype=A.dtype)
 
-        #     dx[idx] = gmres(LO, -phi[idx[0]], tol=gmres_tol, restart=restart)
+            dx[idx] = gmres(LO, -phi[idx[0]], tol=gmres_tol, restart=restart)
             # dx[idx] = gmres(fun, -phi[I], tol=1e-20, restart=restart)
 
         else:
@@ -271,10 +274,10 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
         assert np.all(np.isreal(nabla_phi)), 'nabla_phi is not real'
 
         # Perform gradient descent step if take_grad_step is defined
-        if take_grad_step:
-            alpha = 0.9
-            dx = -nabla_phi
-            grad_steps += 1
+        # if take_grad_step:
+        #     alpha = 0.9
+        #     dx = -nabla_phi
+        #     grad_steps += 1
 
         # Tests whether the search direction is below machine
         # precision.
@@ -282,12 +285,12 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
             flag = 5
             # If enabled and the relative change in error is low, use
             # a gradient descent step
-            if take_grad_step:
-                dx = -nabla_phi
-                grad_steps += 1
-                print "*** Search direction below machine precision at iterate " + repr(iterate) + ", choosing gradient as search direction."
-            else:
-                break
+            # if take_grad_step:
+            #     dx = -nabla_phi
+            #     grad_steps += 1
+            #     print "*** Search direction below machine precision at iterate " + repr(iterate) + ", choosing gradient as search direction."
+            # else:
+            #     break
 
         # Test whether we are stuck in a local minima
         if np.linalg.norm(nabla_phi) < tol_abs:
@@ -296,52 +299,67 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
 
         # Test whether our direction is a sufficient descent direction
         if np.dot(nabla_phi.T,dx) > -rho*(np.dot(dx.T, dx)):
+            flag = 100
+            break
             # Otherwise we should try gradient direction instead.
-            if use_grad_steps:
-                dx = -nabla_phi
-                grad_steps += 1
-                print "*** Non descend direction at iterate " + repr(iterate) + ", choosing gradient as search direction."
-            else:
-                flag = 7
-                break
+            # if use_grad_steps:
+            #     dx = -nabla_phi
+            #     grad_steps += 1
+            #     print "*** Non descend direction at iterate " + repr(iterate) + ", choosing gradient as search direction."
+            # else:
+            #     flag = 7
+            #     break
 
         ##### Armijo backtracking combined with a projected line-search #####
-        tau = 1.0
+        searchstrategymonitor.reset()
+
+        # tau = 1.0
         f_0 = err
-        grad_f = beta*np.dot(nabla_phi.T,dx)
+        grad_f = np.dot(nabla_phi.T,dx)
+
+        searchstrategymonitor.init( f_0, grad_f )
+        # tau = 1.0o
+        searchstrategymonitor.reset()
 
         x_k = x[:]
         assert x_k.shape == (N,1), 'x_k is not a column vector, it has shape: ' + repr(x_k)
-        assert np.all(np.isreal(x_k)), 'x_k is not real'
-    
+        assert np.all(np.isreal(x_k)), 'x_k contain non real numbers'
+
+        f_k = f_0
+        
+        while (not searchstrategymonitor.finished( f_k )):
+
+            searchstrategymonitor.step()
         # Perform line search
-        while True:
+        # while True:
+            tau = searchstrategymonitor.step_length()
             x_k = np.maximum(0, x + dx*tau)
             assert x_k.shape == (N,1), 'x_k is not a column vector, it has shape: ' + repr(x_k.shape)
-            assert np.all(np.isreal(x_k)), 'x_k is not real'
+            assert np.all(np.isreal(x_k)), 'x_k contains non real numbers'
 
             y_k = np.dot(A,x_k)+b
             assert y_k.shape == (N,1), 'y_k is not a column vector, it has shape: ' + repr(y_k.shape)
-            assert np.all(np.isreal(y_k)), 'y_k is not real'
+            assert np.all(np.isreal(y_k)), 'y_k contains non real numbers'
             phi_k = fischer(y_k,x_k)
             assert phi_k.shape == (N,1), 'phi_k is not a column vector, it has shape: ' + repr(phi_k.shape)
-            assert np.all(np.isreal(phi_k)), 'phi_k is not real'
+            assert np.all(np.isreal(phi_k)), 'phi_k contains non real numbers'
 
-            f_k = 0.5*(np.dot(phi_k.T,phi_k))
-            # Test Armijo condition for sufficient decrease
-            if f_k <= f_0 + tau*grad_f:
-                break
+            # f_k = 0.5*(np.dot(phi_k.T,phi_k))
+            f_k = compute_objective(phi_k)
+                        # Test Armijo condition for sufficient decrease
+            # if f_k <= f_0 + tau*grad_f:
+            #     break
             
             # Test whether the stepsize has become too small
-            if tau*tau < gamma:
-                break
+            # if tau*tau < gamma:
+            #     break
 
-            tau *= alpha
+            # tau *= alpha
 
         # Update iterate with result from line search.
         x = x_k
         assert x.shape == (N,1), 'x is not a column vector, it has shape: ' + repr(x.shape)
-        assert np.all(np.isreal(x)), 'x is not real.'
+        assert np.all(np.isreal(x)), 'x contains non real numbers'
 
         # Increment iterate
         iterate +=1
@@ -356,112 +374,115 @@ def fischer_newton(A, b, x, max_iter=0, tol_rel=0.00001, tol_abs=np.finfo(np.flo
 def fischer(y,x):
     return np.sqrt(np.power(y,2) + np.power(x,2)) - y - x
 
+def compute_objective( phi ):
+    return .5*np.dot(phi.T, phi)
 
-def fischer_warm_start(A, x, b, max_warm_iterate=10, max_bgs_iterate=10, bgs_blocksize=1):
 
-    # Redudant
-    alpha  = 0.5
-    beta   = 0.001
-    gamma  = 1e-28
+# def fischer_warm_start(A, x, b, max_warm_iterate=10, max_bgs_iterate=10, bgs_blocksize=1):
 
-    eps    = np.finfo(np.float64).eps
-    rho    = np.finfo(np.float64).eps
-    N = np.size(b)
+#     # Redudant
+#     alpha  = 0.5
+#     beta   = 0.001
+#     gamma  = 1e-28
 
-    warm_iterate = 0
-    while warm_iterate < max_warm_iterate:
-        warm_iterate += 1
-        y = np.dot(A,x) + b
+#     eps    = np.finfo(np.float64).eps
+#     rho    = np.finfo(np.float64).eps
+#     N = np.size(b)
+
+#     warm_iterate = 0
+#     while warm_iterate < max_warm_iterate:
+#         warm_iterate += 1
+#         y = np.dot(A,x) + b
         
-        phi = fischer(y,x)
+#         phi = fischer(y,x)
         
-        err = 0.5*np.dot(phi.T,phi)
+#         err = 0.5*np.dot(phi.T,phi)
 
-        # Bitmask of True/False values where the conditions are
-        # satisfied, that is where phi and x are near
-        # singular/singular.
-        S = np.logical_and(np.abs(phi) < gamma, np.abs(x) < gamma)
-        # Bitmask of nonsingular values
-        I = np.logical_not(S)
-        idx = np.where(I)
+#         # Bitmask of True/False values where the conditions are
+#         # satisfied, that is where phi and x are near
+#         # singular/singular.
+#         S = np.logical_and(np.abs(phi) < gamma, np.abs(x) < gamma)
+#         # Bitmask of nonsingular values
+#         I = np.logical_not(S)
+#         idx = np.where(I)
 
-        px = np.zeros(x.shape)
-        px[:] = x # Copy x
-        assert px.shape == (N,1), 'px is not a column vector, it has shape: ' + repr(px.shape)
-        assert np.all( np.isreal(px) ), 'px is not real'
-        direction = np.zeros(x.shape)
-        direction[:] = np.sign(x)
-        direction[ direction == 0 ] = 1
-        px[S] = gamma * direction[S]
-        p = np.zeros(px.shape)
-        # p = (px / (np.sqrt(y**2+px**2)))-1
-        p = (px / (np.sqrt(np.power(y,2) + np.power(px,2))))-1
-        assert p.shape == (N,1), 'p is not a column vector, it has shape: ' + repr(p.shape)
-        assert np.all(np.isreal(p)), 'p is not real'
+#         px = np.zeros(x.shape)
+#         px[:] = x # Copy x
+#         assert px.shape == (N,1), 'px is not a column vector, it has shape: ' + repr(px.shape)
+#         assert np.all( np.isreal(px) ), 'px is not real'
+#         direction = np.zeros(x.shape)
+#         direction[:] = np.sign(x)
+#         direction[ direction == 0 ] = 1
+#         px[S] = gamma * direction[S]
+#         p = np.zeros(px.shape)
+#         # p = (px / (np.sqrt(y**2+px**2)))-1
+#         p = (px / (np.sqrt(np.power(y,2) + np.power(px,2))))-1
+#         assert p.shape == (N,1), 'p is not a column vector, it has shape: ' + repr(p.shape)
+#         assert np.all(np.isreal(p)), 'p is not real'
 
-        # Convert np.nan in p to 0.0
-        # p = np.nan_to_num(p)
+#         # Convert np.nan in p to 0.0
+#         # p = np.nan_to_num(p)
 
-        q = np.zeros(y.shape)
-        # q = (y/(np.sqrt(y**2+px**2)))-1
-        q = (y / (np.sqrt(np.power(y,2) + np.power(px,2)))) - 1
-        assert q.shape == (N,1), 'q is not a column vector, it has shape: ' + repr(q.shape)
-        assert np.all(np.isreal(q)), 'q is not reeal'
+#         q = np.zeros(y.shape)
+#         # q = (y/(np.sqrt(y**2+px**2)))-1
+#         q = (y / (np.sqrt(np.power(y,2) + np.power(px,2)))) - 1
+#         assert q.shape == (N,1), 'q is not a column vector, it has shape: ' + repr(q.shape)
+#         assert np.all(np.isreal(q)), 'q is not reeal'
 
-        # Convert np.nan in q to 0.0
-        # q = np.nan_to_num(q)
+#         # Convert np.nan in q to 0.0
+#         # q = np.nan_to_num(q)
 
-        J = np.dot(np.diag(p[:,0]),np.identity(N)) + np.dot(np.diag(q[:,0]),A)
-        assert J.shape == (N,N), 'J is not a square matrix, it has shape: ' + repr(J.shape)
-        assert np.all(np.isreal(J)), 'J is not real'
+#         J = np.dot(np.diag(p[:,0]),np.identity(N)) + np.dot(np.diag(q[:,0]),A)
+#         assert J.shape == (N,N), 'J is not a square matrix, it has shape: ' + repr(J.shape)
+#         assert np.all(np.isreal(J)), 'J is not real'
 
-        dx = np.zeros((N,1))
-        dx = phi[:]
+#         dx = np.zeros((N,1))
+#         dx = phi[:]
 
-        block_gauss_seidel(J, (-dx), np.zeros((A.shape[0],1)), iterations=max_bgs_iterate, sweep='symmetric', blocksize=bgs_blocksize)
+#         block_gauss_seidel(J, (-dx), np.zeros((A.shape[0],1)), iterations=max_bgs_iterate, sweep='symmetric', blocksize=bgs_blocksize)
 
-        nabla_phi = np.dot(phi.T, J)
-        nabla_phi = nabla_phi.reshape(nabla_phi.size, 1)
-        ##### Armijo backtracking combined with a projected line-search #####
-        tau = 1.0
-        f_0 = err
+#         nabla_phi = np.dot(phi.T, J)
+#         nabla_phi = nabla_phi.reshape(nabla_phi.size, 1)
+#         ##### Armijo backtracking combined with a projected line-search #####
+#         tau = 1.0
+#         f_0 = err
 
-        grad_f = beta*np.dot(nabla_phi.T,dx)
+#         grad_f = beta*np.dot(nabla_phi.T,dx)
 
-        x_k = x[:]
-        assert x_k.shape == (N,1), 'x_k is not a column vector, it has shape: ' + repr(x_k)
-        assert np.all(np.isreal(x_k)), 'x_k is not real'
+#         x_k = x[:]
+#         assert x_k.shape == (N,1), 'x_k is not a column vector, it has shape: ' + repr(x_k)
+#         assert np.all(np.isreal(x_k)), 'x_k is not real'
     
-        # Perform line search
-        while True:
+#         # Perform line search
+#         while True:
 
-            x_k = np.maximum(0, x + dx*tau)
-            assert x_k.shape == (N,1), 'x_k is not a column vector, it has shape: ' + repr(x_k.shape)
-            assert np.all(np.isreal(x_k)), 'x_k is not real'
+#             x_k = np.maximum(0, x + dx*tau)
+#             assert x_k.shape == (N,1), 'x_k is not a column vector, it has shape: ' + repr(x_k.shape)
+#             assert np.all(np.isreal(x_k)), 'x_k is not real'
 
-            y_k = np.dot(A,x_k)+b
-            assert y_k.shape == (N,1), 'y_k is not a column vector, it has shape: ' + repr(y_k.shape)
-            assert np.all(np.isreal(y_k)), 'y_k is not real'
+#             y_k = np.dot(A,x_k)+b
+#             assert y_k.shape == (N,1), 'y_k is not a column vector, it has shape: ' + repr(y_k.shape)
+#             assert np.all(np.isreal(y_k)), 'y_k is not real'
 
-            phi_k = fischer(y_k,x_k)
-            assert phi_k.shape == (N,1), 'phi_k is not a column vector, it has shape: ' + repr(phi_k.shape)
-            assert np.all(np.isreal(phi_k)), 'phi_k is not real'
+#             phi_k = fischer(y_k,x_k)
+#             assert phi_k.shape == (N,1), 'phi_k is not a column vector, it has shape: ' + repr(phi_k.shape)
+#             assert np.all(np.isreal(phi_k)), 'phi_k is not real'
 
-            f_k = 0.5*(np.dot(phi_k.T,phi_k))
+#             f_k = 0.5*(np.dot(phi_k.T,phi_k))
 
-            # Test Armijo condition for sufficient decrease
-            if np.all(f_k <= f_0 + tau*grad_f):
-                break
+#             # Test Armijo condition for sufficient decrease
+#             if np.all(f_k <= f_0 + tau*grad_f):
+#                 break
             
-            # Test whether the stepsize has become too small
-            if tau*tau < gamma:
-                break
+#             # Test whether the stepsize has become too small
+#             if tau*tau < gamma:
+#                 break
 
-            tau *= alpha
+#             tau *= alpha
 
-        # Update iterate with result from line search.
-        x = x_k
-        assert x.shape == (N,1), 'x is not a column vector, it has shape: ' + repr(x.shape)
-        assert np.all(np.isreal(x)), 'x is not real.'
+#         # Update iterate with result from line search.
+#         x = x_k
+#         assert x.shape == (N,1), 'x is not a column vector, it has shape: ' + repr(x.shape)
+#         assert np.all(np.isreal(x)), 'x is not real.'
 
-    return x
+#     return x
