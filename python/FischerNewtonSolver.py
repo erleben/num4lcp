@@ -7,11 +7,12 @@ from StatStructure import StatStructure
 from ArmijoLineSearch import ArmijoLineSearch
 
 """
-Copyright 2012, Michael Andersen, DIKU. michael (at) diku (dot) dk
+Author: 2012, Michael Andersen, miand {at} dtu (dot) dk | michael (dot) blackplague (dot) andersen {at} gmail (dot) com
+Updated: 2015, Michael
 """
 
 # We might want to delay the imports untill we actually need them.
-from pyamg.relaxation import block_gauss_seidel
+# from pyamg.relaxation import block_gauss_seidel
 
 class NonSquareException(Exception):
     def __init__(self, msg):
@@ -60,7 +61,7 @@ class FischerNewtonSolver:
     def __init__(self,
                  eps=np.finfo(np.float64).eps, 
                  rho=np.finfo(np.float64).eps,
-                 beta=0.001,
+                 beta=0.0001,
                  alpha=0.5):
 
         self.eps     = eps
@@ -72,6 +73,7 @@ class FischerNewtonSolver:
               max_iter=None,
               tol_rel=0.0001,
               tol_abs=10*np.finfo(np.float64).eps,
+              tol_stg=0.0001,
               subsolver=None,
               warmstart=None,
               gradient=None, 
@@ -245,11 +247,10 @@ class FischerNewtonSolver:
             return (x, err)
 
 
-    def fischer(self,a,b):
+    def fischer_burmiester(self,a,b):
         # Fischer function
         # Cite reference to it.
         return np.sqrt(np.power(a,2) + np.power(b,2)) - (a + b)
-        # return np.sqrt(y**2+x**2) - y - x
 
     # def fischerLinearOperator(A,x,dx,phi,h,idx):
     #     fischer(np.dot(A[idx[0],:][:,idx[0]],(x[idx]+dx[idx]*h)),
@@ -262,21 +263,18 @@ class FischerNewtonSolver:
             self.eps   = eps
 
         def solve(self, A, x, y, phi):
-            """Solves the sub Newton system of the Fischer Newton method
+            """Solves the Newton system of the Fischer Newton method
             in order to obtain the Newton direction dx."""
 
             # Bitmask of True/False values where the conditions are
             # satisfied, that is where phi and x are near
             # singular/singular.
-            S = np.logical_and(np.abs(phi) < self.gamma,
-                           np.abs(x) < self.gamma)
-
+            S = np.logical_and(np.abs(phi) < self.gamma, np.abs(x) < self.gamma)
             N = np.size(x)
             
             px = np.zeros(x.shape)
             px[:] = x # Copy x
-            assert px.shape == (N,1), 'px is not a column vector, it has shape: ' + \
-                repr(px.shape)
+            assert px.shape == (N,1), 'px is not a column vector, it has shape: ' + repr(px.shape)
             assert np.all( np.isreal(px) ), 'px is not real'
 
             direction = np.zeros(x.shape)
@@ -333,13 +331,64 @@ class FischerNewtonSolver:
             assert np.all(np.isreal(dx)), 'dx is not real'
 
             return (J, dx)
+
+# class Perturbation:
+
+#     px = np.zeros(x.shape)
+#     px[:] = x # Copy x
+#     assert px.shape == (N,1), 'px is not a column vector, it has shape: ' + repr(px.shape)
+#     assert np.all( np.isreal(px) ), 'px is not real'
+#     direction = np.zeros(x.shape)
+#     direction[:] = np.sign(x)
+#     direction[ direction == 0 ] = 1
+#     px[S] = gamma * direction[S]
+#     p = np.zeros(px.shape)
+#     p = (px / (np.sqrt(np.power(y,2) + np.power(px,2))))-1
+#     assert p.shape == (N,1), 'p is not a column vector, it has shape: ' + repr(p.shape)
+#     assert np.all(np.isreal(p)), 'p is not real'
+
+#     q = np.zeros(y.shape)
+#     q = (y / (np.sqrt(np.power(y,2) + np.power(px,2)))) - 1
+#     assert q.shape == (N,1), 'q is not a column vector, it has shape: ' + repr(q.shape)
+#     assert np.all(np.isreal(q)), 'q is not reeal'
+
+#     J = np.dot(np.diag(p[:,0]),np.identity(N)) + np.dot(np.diag(q[:,0]),A)
+#     assert J.shape == (N,N), 'J is not a square matrix, it has shape: ' + repr(J.shape)
+#     assert np.all(np.isreal(J)), 'J is not real'
+
+#     # Reciprocal conditioning number of J
+#     rcond = 1/np.linalg.cond(J)
+#     if np.isnan(rcond):
+#         rcond = np.nan_to_num(rcond)
         
-    class SubsolverRandom:
-        pass
+#     # Check conditioning of J, if bad use pinv to solve the system.
+#     if rcond < 2*eps:
+#         if np.any(np.isnan(J)):
+#             print "J contains nan"
+#         if np.any(np.isnan(phi)):
+#             print "phi contains nan"
+#         try:
+#             dx = np.dot(spl.pinv(J), (-phi))
+#         except Exception:
+#             print repr(dir(Exception))
+#             dx = np.dot(spl.pinv2(J), (-phi))
 
-    class SubsolverZero:
-        pass
+#     else:
+#         J = sps.csc_matrix(J)
+#         dx = dsolve.spsolve(J, (-phi), use_umfpack=True)
+#         dx = dx.reshape(dx.size,1)
+#         J = J.toarray()
 
-    class SubsolverApproximation:
-        # This has not yet been implemented.
-        pass
+#     assert dx.shape == (N,1), 'dx is not a column vector, it has shape: ' + repr(dx.shape)
+#     assert np.all(np.isreal(dx)), 'dx is not real'
+
+            
+class SubsolverRandom:
+    pass
+
+class SubsolverZero:
+    pass
+
+class SubsolverApproximation:
+    # This has not yet been implemented.
+    pass
