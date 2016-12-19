@@ -19,4 +19,6 @@ Please use this reference when citing this project
 }
 }}}
 
-Documentation can be found in these SIGGRAPH course notes http://iphys.wordpress.com/2013/05/19/numerical-methods-for-linear-complementarity-problems-in-physics-based-animation/ 
+Documentation can be found in these SIGGRAPH course notes http://iphys.wordpress.com/2013/05/19/numerical-methods-for-linear-complementarity-problems-in-physics-based-animation/
+
+Enjoy
