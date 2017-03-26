@@ -1,5 +1,4 @@
-SET(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -code=sm_30 -arch=compute_30") # Set compute capability of Nvidia card, ability to solve for double.
-
+# SET(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -code=sm_30 -arch=compute_30") # Set compute capability of Nvidia card, ability to solve for double.
 #SET(CUDA_NVCC_FLAGS -maxrregcount 24)
 #SET(CUDA_NVCC_FLAGS_DEBUG -DTHRUST_DEBUG)
 #SET(CUDA_NVCC_FLAGS_DEBUG -g; -G) # Enable cuda-gdb debugger
