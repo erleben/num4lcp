@@ -1,5 +1,7 @@
+#include <gpu_get_device_count.h>
 #include <gpu_print_device.h>
 #include <gpu_print_versions.h>
+#include <gpu_set_device.h>
 
 #include <util_matlab_write_vector.h>
 #include <util_matlab_write_profiling.h>
@@ -127,12 +129,17 @@ public:
       file << "Computational software:" << std::endl;
       file << print_versions() << std::endl;
 
+      set_device(m_params.device_number());
+
       file << "Computational device:" << std::endl;
       file << print_device(m_params.device_number()) << std::endl;
 
       file.flush();
       file.close();
     }
+
+    for(int number=0;number < get_device_count();++number)
+      std::cout << print_device(number) << std::endl;
 
     m_cur_time = 0.0;
 
