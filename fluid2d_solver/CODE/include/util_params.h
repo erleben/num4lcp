@@ -98,6 +98,12 @@ protected:
   T             m_psor_stagnation_tolerance;       ///< The stagnation tolerance level for the PSOR solver
   T             m_psor_relaxation;                 ///< The PSOR relaxation.
 
+  bool          m_grad_warmstart;                  ///< Boolean flag that indicates if sd warmstart should be used for LCP solving
+  I             m_grad_max_iterations;             ///< The maximum allowed sd iterations.
+  T             m_grad_absolute_tolerance;         ///< The absolute tolerance level for the sd solver
+  T             m_grad_relative_tolerance;         ///< The relative tolerance level for the sd solver
+  T             m_grad_stagnation_tolerance;       ///< The stagnation tolerance level for the sd solver
+
   I             m_eq_max_iterations;               ///< The maximum allowed sub solver iterations. This is the maximum allowed number of iterations.
   T             m_eq_absolute_tolerance;           ///< The absolute tolerance level for the solver.
   T             m_eq_relative_tolerance;           ///< The relative tolerance level for the solver.
@@ -160,7 +166,13 @@ public:
   T           const & psor_relative_tolerance()       const { return this->m_psor_relative_tolerance;       }
   T           const & psor_stagnation_tolerance()     const { return this->m_psor_stagnation_tolerance;     }
   T           const & psor_relaxation()               const { return this->m_psor_relaxation;               }
-  
+
+  bool        const & grad_warmstart()                const { return this->m_grad_warmstart;                }
+  I           const & grad_max_iterations()           const { return this->m_grad_max_iterations;           }
+  T           const & grad_absolute_tolerance()       const { return this->m_grad_absolute_tolerance;       }
+  T           const & grad_relative_tolerance()       const { return this->m_grad_relative_tolerance;       }
+  T           const & grad_stagnation_tolerance()     const { return this->m_grad_stagnation_tolerance;     }
+
   I           const & eq_max_iterations()             const { return this->m_eq_max_iterations;             }
   T           const & eq_absolute_tolerance()         const { return this->m_eq_absolute_tolerance;         }
   T           const & eq_relative_tolerance()         const { return this->m_eq_relative_tolerance;         }
@@ -220,7 +232,14 @@ public:
   T            & psor_relative_tolerance()        { return this->m_psor_relative_tolerance;       }
   T            & psor_stagnation_tolerance()      { return this->m_psor_stagnation_tolerance;     }
   T            & psor_relaxation()                { return this->m_psor_relaxation;               }
-  
+
+  bool         & grad_warmstart()                 { return this->m_grad_warmstart;                }
+  I            & grad_max_iterations()            { return this->m_grad_max_iterations;           }
+  T            & grad_absolute_tolerance()        { return this->m_grad_absolute_tolerance;       }
+  T            & grad_relative_tolerance()        { return this->m_grad_relative_tolerance;       }
+  T            & grad_stagnation_tolerance()      { return this->m_grad_stagnation_tolerance;     }
+
+
   I            & eq_max_iterations()              { return this->m_eq_max_iterations;             }
   T            & eq_absolute_tolerance()          { return this->m_eq_absolute_tolerance;         }
   T            & eq_relative_tolerance()          { return this->m_eq_relative_tolerance;         }
@@ -273,6 +292,11 @@ public:
   , m_psor_relative_tolerance(1e-3)
   , m_psor_stagnation_tolerance(1e-6)
   , m_psor_relaxation(0.75)
+  , m_grad_warmstart(false)
+  , m_grad_max_iterations(10u)
+  , m_grad_absolute_tolerance(1e-6)
+  , m_grad_relative_tolerance(1e-4)
+  , m_grad_stagnation_tolerance(1e-6)
   , m_eq_max_iterations(100u)
   , m_eq_absolute_tolerance(1e-6)
   , m_eq_relative_tolerance(1e-3)
@@ -395,13 +419,24 @@ public:
     std::string psor_relative_tolerance       = get_string_value(file_name, "psor_relative_tolerance", "1e-3"       );
     std::string psor_stagnation_tolerance     = get_string_value(file_name, "psor_stagnation_tolerance", "1e-6"     );
     std::string psor_relaxation               = get_string_value(file_name, "psor_relaxation", "0.75"               );
+    std::string grad_warmstart                = get_string_value(file_name, "grad_warmstart", "false"               );
+    std::string grad_max_iterations           = get_string_value(file_name, "grad_max_iterations", "10"             );
+    std::string grad_absolute_tolerance       = get_string_value(file_name, "grad_absolute_tolerance", "1e-6"       );
+    std::string grad_relative_tolerance       = get_string_value(file_name, "grad_relative_tolerance", "1e-3"       );
+    std::string grad_stagnation_tolerance     = get_string_value(file_name, "grad_stagnation_tolerance", "1e-6"     );
+
     m_psor_warmstart                          = detail::string2bool( psor_warmstart );
     m_psor_max_iterations                     = detail::string2number<I>( psor_max_iterations   );
     m_psor_absolute_tolerance                 = detail::string2number<T>( psor_absolute_tolerance    );
     m_psor_relative_tolerance                 = detail::string2number<T>( psor_relative_tolerance    );
     m_psor_stagnation_tolerance               = detail::string2number<T>( psor_stagnation_tolerance   );
     m_psor_relaxation                         = detail::string2number<T>( psor_relaxation );
-    
+    m_grad_warmstart                          = detail::string2bool( grad_warmstart );
+    m_grad_max_iterations                     = detail::string2number<I>( grad_max_iterations   );
+    m_grad_absolute_tolerance                 = detail::string2number<T>( grad_absolute_tolerance    );
+    m_grad_relative_tolerance                 = detail::string2number<T>( grad_relative_tolerance    );
+    m_grad_stagnation_tolerance               = detail::string2number<T>( grad_stagnation_tolerance   );
+
     std::string eq_max_iterations             = get_string_value(file_name, "eq_max_iterations", "100"              );
     std::string eq_absolute_tolerance         = get_string_value(file_name, "eq_absolute_tolerance", "1e-6"         );
     std::string eq_relative_tolerance         = get_string_value(file_name, "eq_relative_tolerance", "1e-3"         );
@@ -485,6 +520,11 @@ inline std::string print_params(Params const & params)
   output << "psor_relative_tolerenace      = " << params.psor_relative_tolerance()      << std::endl;
   output << "psor_stagnation_tolerance     = " << params.psor_stagnation_tolerance()    << std::endl;
   output << "psor_relaxation               = " << params.psor_relaxation()              << std::endl;
+  output << "grad_warmstart                = " << params.grad_warmstart()               << std::endl;
+  output << "grad_max_iterations           = " << params.grad_max_iterations()          << std::endl;
+  output << "grad_absolute_tolerance       = " << params.grad_absolute_tolerance()      << std::endl;
+  output << "grad_relative_tolerenace      = " << params.grad_relative_tolerance()      << std::endl;
+  output << "grad_stagnation_tolerance     = " << params.grad_stagnation_tolerance()    << std::endl;
   output << "eq_max_iterations             = " << params.eq_max_iterations()            << std::endl;
   output << "eq_absolute_tolerance         = " << params.eq_absolute_tolerance()        << std::endl;
   output << "eq_relative_tolerance         = " << params.eq_relative_tolerance()        << std::endl;

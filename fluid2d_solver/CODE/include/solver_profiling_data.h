@@ -30,14 +30,17 @@ public:
   unsigned int m_newton_status;
   unsigned int m_psor_status;
   unsigned int m_eq_status;
+  unsigned int m_grad_status;
 
   unsigned int m_newton_iteration;
   unsigned int m_psor_iteration;
   unsigned int m_eq_iteration;
+  unsigned int m_grad_iteration;
 
   cusp::array1d<float, cusp::host_memory> m_newton_residuals;
   cusp::array1d<float, cusp::host_memory> m_psor_residuals;
   cusp::array1d<float, cusp::host_memory> m_eq_residuals;
+  cusp::array1d<float, cusp::host_memory> m_grad_residuals;
 
 public:
 
@@ -50,12 +53,15 @@ public:
     , m_newton_status(0u)
     , m_psor_status(0u)
     , m_eq_status(0u)
+    , m_grad_status(0u)
     , m_newton_iteration(0u)
     , m_psor_iteration(0u)
     , m_eq_iteration(0u)
+    , m_grad_iteration(0u)
     , m_newton_residuals()
     , m_psor_residuals()
     , m_eq_residuals()
+    , m_grad_residuals()
   {}
 
 };

@@ -261,10 +261,10 @@ inline __host__ void min_map_newton(  matrix_type    const & A
       unsigned int desired_max_iterations = params.sub_solver_max_iterations();
       unsigned int necessary_max_iterations = N / 10;
 
-      schur_operator_type           S_op = make_schur_operator( A, neg_H, is_active );
+      schur_operator_type          S_op = make_schur_operator( A, neg_H, is_active );
       preconditioner_operator_type P_op = make_preconditioner_operator( P, is_active );
     
-      unsigned int const sub_solver_max_iteration       = max(desired_max_iterations, necessary_max_iterations );
+      unsigned int const sub_solver_max_iteration       = max( desired_max_iterations, necessary_max_iterations );
       T            const sub_solver_absolute_tolerance  = min( desired_accuracy, necessary_accuracy );
       T            const sub_solver_relative_tolerance  = params.sub_solver_relative_tolerance();
       unsigned int const sub_solver_choice              = params.sub_solver_choice();
@@ -347,8 +347,8 @@ inline __host__ void min_map_newton(  matrix_type    const & A
       T            const line_search_beta           = params.line_search_beta();
       T            const line_search_gamma          = params.line_search_gamma();
       unsigned int const line_search_max_iterations = params.line_search_max_iterations();
-      unsigned int       line_serach_status         = ITERATING;
-      unsigned int       line_serach_iteration      = 0u;
+      unsigned int       line_search_status         = ITERATING;
+      unsigned int       line_search_iteration      = 0u;
       T                  tau                        = T(1.0);
       
       details::projected_back_tracking_line_search(
@@ -366,13 +366,13 @@ inline __host__ void min_map_newton(  matrix_type    const & A
                                                    , y
                                                    , H
                                                    , tau
-                                                   , line_serach_iteration
-                                                   , line_serach_status
+                                                   , line_search_iteration
+                                                   , line_search_status
                                                    );
 
       //--- Make tests to make sure the line search was OK
       {
-        if (line_serach_status == TOO_SMALL_STEP)
+        if (line_search_status == TOO_SMALL_STEP)
         {
           if(params.verbose())
           {
@@ -381,7 +381,7 @@ inline __host__ void min_map_newton(  matrix_type    const & A
           newton_status = LINE_SEARCH_FAILURE;
           return;
         }
-        if (line_serach_status == MAX_LIMIT)
+        if (line_search_status == MAX_LIMIT)
         {
           if(params.verbose())
           {

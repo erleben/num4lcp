@@ -12,6 +12,7 @@
 
 #include <solver_min_map_newton.h>
 #include <solver_psor.h>
+#include "solver_gradient_descent.h"
 #include <solver_profiling_data.h>
 #include <solver_make_coo_matrix.h>
 
@@ -122,7 +123,7 @@ inline __host__ void solve_lcp(
     profiling_data.m_host_initialization_time = cpu_timer();
     gpu_timer.start();
   }
-  
+
   if(params.psor_warmstart())
   {
     if(params.profiling() && params.record_time())
@@ -145,6 +146,22 @@ inline __host__ void solve_lcp(
     {
       cpu_timer.stop();
       profiling_data.m_psor_time = cpu_timer();
+    }
+  }
+  else if (params.grad_warmstart())
+  {
+    if(params.profiling() && params.record_time())
+    {
+      cpu_timer.start();
+    }
+      gradient_descent(
+              A1, b1, x1, is_bilateral1, params, profiling_data.m_grad_status, profiling_data.m_grad_iteration,
+              profiling_data.m_grad_residuals
+      );
+
+    if(params.profiling() && params.record_time())
+    {
+      cpu_timer.stop();
     }
   }
 
